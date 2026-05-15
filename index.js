@@ -534,6 +534,9 @@ export async function runScreeningCycle({ silent = false } = {}) {
       }
     }
 
+    // Cache candidates so /candidates and /deploy commands work
+    setLatestCandidates(passing.map(({ pool }) => pool));
+
     // Pre-fetch active_bin for all passing candidates in parallel
     const activeBinResults = await Promise.allSettled(
       passing.map(({ pool }) => getActiveBin({ pool_address: pool.pool }))
