@@ -1,0 +1,13 @@
+{
+  "name": "Block Background Execution",
+  "version": "1.0.0",
+  "description": "Prevents running commands in background mode — all bash commands must be sequential and blocking",
+  "when": {
+    "type": "preToolUse",
+    "toolTypes": ["shell"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Check if this shell command is attempting background execution (using &, nohup, disown, or run_in_background flag). If it is, deny it with reason: 'Background execution is disabled in this project — all commands must run sequentially and blocking.' If it is NOT background execution, proceed normally."
+  }
+}

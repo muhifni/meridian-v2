@@ -108,6 +108,9 @@ const DECISION_EXPLANATION_INTENTS = /\b(why did you|why'd you|why was (?:this|t
 
 function shouldRequireRealToolUse(goal, agentType, interactive = false) {
   if (agentType === "MANAGER") return false;
+  // SCREENER cron goals contain "deploy" in instructions but the LLM may
+  // legitimately decide no candidate qualifies — don't block a "no deploy" answer.
+  if (agentType === "SCREENER") return false;
   if (DECISION_EXPLANATION_INTENTS.test(goal)) return false;
   if (CONFIG_READ_ONLY_INTENTS.test(goal)) return false;
   if (MUTATING_TOOL_INTENTS.test(goal)) return true;
@@ -191,9 +194,10 @@ export async function agentLoop(goal, maxSteps = config.llm.maxSteps, sessionHis
       const FALLBACK_MODEL = "gemini-2.5-pro";
       let response;
       let usedModel = activeModel;
-      // Force a tool call on step 0 for action intents — prevents the model from inventing deploy/close outcomes
+      // Force a tool call on step 0 for action intents — prevents the model from inventing deploy/close outcomes.
+      // SCREENER is excluded: it may legitimately decide no candidate qualifies and answer without a tool call.
       const ACTION_INTENTS = /\b(deploy|open|add liquidity|close|exit|withdraw|claim|swap|block|unblock)\b/i;
-      let toolChoice = (step === 0 && (ACTION_INTENTS.test(goal) || mustUseRealTool)) ? "required" : "auto";
+      let toolChoice = (step === 0 && agentType !== "SCREENER" && (ACTION_INTENTS.test(goal) || mustUseRealTool)) ? "required" : "auto";
 
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
