@@ -285,8 +285,8 @@ export async function agentLoop(goal, maxSteps = config.llm.maxSteps, sessionHis
         if (mustUseRealTool && !sawToolCall) {
           noToolRetryCount += 1;
           messages.pop();
-          log("agent", `Rejected no-tool final answer (${noToolRetryCount}/2) for tool-required request`);
-          if (noToolRetryCount >= 2) {
+          log("agent", `Rejected no-tool final answer (${noToolRetryCount}/1) for tool-required request`);
+          if (noToolRetryCount >= 1) {
             return {
               content: "I couldn't complete that reliably because no tool call was made. Please retry after checking the logs.",
               userMessage: goal,
