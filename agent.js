@@ -3,6 +3,7 @@ import { jsonrepair } from "jsonrepair";
 import { buildSystemPrompt } from "./prompt.js";
 import { executeTool } from "./tools/executor.js";
 import { tools } from "./tools/definitions.js";
+import { createChatCompletionWithRetry } from "./utils/llm.js";
 
 const MANAGER_TOOLS  = new Set(["close_position", "claim_fees", "swap_token", "get_position_pnl", "get_my_positions", "get_wallet_balance"]);
 const SCREENER_TOOLS = new Set(["deploy_position", "get_active_bin", "get_top_candidates", "check_smart_wallets_on_pool", "get_token_holders", "get_token_narrative", "get_token_info", "search_pools", "get_pool_memory", "get_wallet_balance", "get_my_positions"]);
@@ -180,60 +181,64 @@ export async function agentLoop(goal, maxSteps = config.llm.maxSteps, sessionHis
   let sawToolCall = false;
   let noToolRetryCount = 0;
 
-  let emptyStreak = 0;
   for (let step = 0; step < maxSteps; step++) {
     log("agent", `Step ${step + 1}/${maxSteps}`);
 
     try {
       const activeModel = model || DEFAULT_MODEL;
 
-      // Retry up to 3 times on transient provider errors (502, 503, 529)
-      const FALLBACK_MODEL = "stepfun/step-3.5-flash:free";
-      let response;
-      let usedModel = activeModel;
-      // Force a tool call on step 0 for action intents — prevents the model from inventing deploy/close outcomes
+      // Force a tool call on step 0 for action intents
       const ACTION_INTENTS = /\b(deploy|open|add liquidity|close|exit|withdraw|claim|swap|block|unblock)\b/i;
       let toolChoice = (step === 0 && (ACTION_INTENTS.test(goal) || mustUseRealTool)) ? "required" : "auto";
 
-      for (let attempt = 0; attempt < 3; attempt++) {
-        try {
-          response = await client.chat.completions.create({
-            model: usedModel,
-            messages,
-            tools: getToolsForRole(agentType, goal),
-            tool_choice: toolChoice,
-            temperature: config.llm.temperature,
-            max_tokens: maxOutputTokens ?? config.llm.maxTokens,
-          });
-        } catch (error) {
-          if (providerMode === "system" && isSystemRoleError(error)) {
-            providerMode = "user_embedded";
-            messages = buildMessages(systemPrompt, sessionHistory, goal, providerMode);
-            log("agent", "Provider rejected system role — retrying with embedded system instructions");
-            attempt -= 1;
-            continue;
-          }
-          if (toolChoice === "required" && isToolChoiceRequiredError(error)) {
-            toolChoice = "auto";
-            log("agent", "Provider rejected tool_choice=required — retrying with tool_choice=auto");
-            attempt -= 1;
-            continue;
-          }
-          throw error;
+      let response;
+      let usedModel = activeModel;
+      const FALLBACK_MODEL = "stepfun/step-3.5-flash:free";
+
+      try {
+        response = await createChatCompletionWithRetry(client, {
+          model: usedModel,
+          messages,
+          tools: getToolsForRole(agentType, goal),
+          tool_choice: toolChoice,
+          temperature: config.llm.temperature,
+          max_tokens: maxOutputTokens ?? config.llm.maxTokens,
+        });
+      } catch (error) {
+        // Special handling for provider-specific prompt issues
+        if (providerMode === "system" && isSystemRoleError(error)) {
+          providerMode = "user_embedded";
+          messages = buildMessages(systemPrompt, sessionHistory, goal, providerMode);
+          log("agent", "Provider rejected system role — retrying with embedded system instructions");
+          step -= 1;
+          continue;
         }
-        if (response.choices?.length) break;
-        const errCode = response.error?.code;
-        if (errCode === 502 || errCode === 503 || errCode === 529) {
-          const wait = (attempt + 1) * 5000;
-          if (attempt === 1 && usedModel !== FALLBACK_MODEL) {
-            usedModel = FALLBACK_MODEL;
-            log("agent", `Switching to fallback model ${FALLBACK_MODEL}`);
-          } else {
-            log("agent", `Provider error ${errCode}, retrying in ${wait / 1000}s (attempt ${attempt + 1}/3)`);
-            await new Promise((r) => setTimeout(r, wait));
+        if (toolChoice === "required" && isToolChoiceRequiredError(error)) {
+          toolChoice = "auto";
+          log("agent", "Provider rejected tool_choice=required — retrying with tool_choice=auto");
+          step -= 1;
+          continue;
+        }
+
+        // After exhausting retries, try fallback model once
+        if (usedModel !== FALLBACK_MODEL) {
+          log("agent", `Primary model failed after retries. Trying fallback: ${FALLBACK_MODEL}`);
+          usedModel = FALLBACK_MODEL;
+          try {
+            response = await createChatCompletionWithRetry(client, {
+              model: usedModel,
+              messages,
+              tools: getToolsForRole(agentType, goal),
+              tool_choice: toolChoice,
+              temperature: config.llm.temperature,
+              max_tokens: maxOutputTokens ?? config.llm.maxTokens,
+            });
+          } catch (fbErr) {
+            log("error", `Fallback model also failed: ${fbErr.message}`);
+            throw fbErr;
           }
         } else {
-          break;
+          throw error;
         }
       }
 
@@ -241,9 +246,10 @@ export async function agentLoop(goal, maxSteps = config.llm.maxSteps, sessionHis
         log("error", `Bad API response: ${JSON.stringify(response).slice(0, 200)}`);
         throw new Error(`API returned no choices: ${response.error?.message || JSON.stringify(response)}`);
       }
+
       const msg = response.choices[0].message;
       const invalidToolArgErrors = new Map();
-      // Keep tool-call history API-valid, but never execute unrecoverable args.
+
       if (msg.tool_calls) {
         for (const tc of msg.tool_calls) {
           if (tc.function?.arguments) {
@@ -255,65 +261,49 @@ export async function agentLoop(goal, maxSteps = config.llm.maxSteps, sessionHis
                 log("warn", `Repaired malformed JSON args for ${tc.function.name}`);
               } catch {
                 tc.function.arguments = "{}";
-                const error = `Invalid tool arguments for ${tc.function.name}`;
-                invalidToolArgErrors.set(tc.id, error);
-                log("error", `${error}: could not repair JSON`);
+                invalidToolArgErrors.set(tc.id, `Invalid tool arguments for ${tc.function.name}`);
+                log("error", `Could not repair JSON for ${tc.function.name}`);
               }
             }
           }
         }
       }
+
       messages.push(msg);
 
-      // If the model didn't call any tools, it's done
       if (!msg.tool_calls || msg.tool_calls.length === 0) {
-        // Hermes sometimes returns null content — pop the empty message and retry once
         if (!msg.content) {
-          messages.pop(); // remove the empty assistant message
+          messages.pop();
           log("agent", "Empty response, retrying...");
           continue;
         }
         if (mustUseRealTool && !sawToolCall) {
           noToolRetryCount += 1;
           messages.pop();
-          log("agent", `Rejected no-tool final answer (${noToolRetryCount}/2) for tool-required request`);
+          log("agent", `Rejected no-tool final answer (${noToolRetryCount}/2)`);
           if (noToolRetryCount >= 2) {
-            return {
-              content: "I couldn't complete that reliably because no tool call was made. Please retry after checking the logs.",
-              userMessage: goal,
-            };
+            return { content: "I couldn't complete that reliably (no tool call). Check logs.", userMessage: goal };
           }
           messages.push({
             role: providerMode === "system" ? "system" : "user",
-            content: providerMode === "system"
-              ? "You have not used any tool yet. This request requires real tool execution or live tool-backed data. Do not answer from memory or inference. Call the appropriate tool first, then report only the real result."
-              : "[SYSTEM REMINDER]\nYou have not used any tool yet. This request requires real tool execution or live tool-backed data. Do not answer from memory or inference. Call the appropriate tool first, then report only the real result.",
+            content: "You have not used any tool yet. This request requires real tool execution. Call the appropriate tool first.",
           });
           continue;
         }
         log("agent", "Final answer reached");
-        log("agent", msg.content);
         return { content: msg.content, userMessage: goal };
       }
+
       sawToolCall = true;
 
-      // Execute each tool call in parallel
       const toolResults = await Promise.all(msg.tool_calls.map(async (toolCall) => {
         const functionName = toolCall.function.name.replace(/<.*$/, "").trim();
         let functionArgs;
 
         if (invalidToolArgErrors.has(toolCall.id)) {
-          const result = {
-            success: false,
-            error: invalidToolArgErrors.get(toolCall.id),
-            blocked: true,
-          };
+          const result = { success: false, error: invalidToolArgErrors.get(toolCall.id), blocked: true };
           await onToolFinish?.({ name: functionName, args: {}, result, success: false, step });
-          return {
-            role: "tool",
-            tool_call_id: toolCall.id,
-            content: JSON.stringify(result),
-          };
+          return { role: "tool", tool_call_id: toolCall.id, content: JSON.stringify(result) };
         }
 
         try {
@@ -321,82 +311,45 @@ export async function agentLoop(goal, maxSteps = config.llm.maxSteps, sessionHis
         } catch {
           try {
             functionArgs = JSON.parse(jsonrepair(toolCall.function.arguments));
-            log("warn", `Repaired malformed JSON args for ${functionName}`);
-          } catch (parseError) {
-            log("error", `Failed to parse args for ${functionName}: ${parseError.message}`);
-            const result = {
-              success: false,
-              error: `Invalid tool arguments for ${functionName}`,
-              blocked: true,
-            };
+            log("warn", `Repaired malformed JSON for ${functionName}`);
+          } catch (e) {
+            log("error", `Failed to parse args for ${functionName}`);
+            const result = { success: false, error: `Invalid args for ${functionName}`, blocked: true };
             await onToolFinish?.({ name: functionName, args: {}, result, success: false, step });
-            return {
-              role: "tool",
-              tool_call_id: toolCall.id,
-              content: JSON.stringify(result),
-            };
+            return { role: "tool", tool_call_id: toolCall.id, content: JSON.stringify(result) };
           }
         }
 
-        // Block once-per-session tools from firing a second time
         if (ONCE_PER_SESSION.has(functionName) && firedOnce.has(functionName)) {
-          log("agent", `Blocked duplicate ${functionName} call — already executed this session`);
-          await onToolFinish?.({
-            name: functionName,
-            args: functionArgs,
-            result: { blocked: true, reason: `${functionName} already attempted this session — do not retry. If it failed, report the error and stop.` },
-            success: false,
-            step,
-          });
-          return {
-            role: "tool",
-            tool_call_id: toolCall.id,
-            content: JSON.stringify({ blocked: true, reason: `${functionName} already attempted this session — do not retry. If it failed, report the error and stop.` }),
-          };
+          const blockedResult = { blocked: true, reason: `${functionName} already attempted this session` };
+          await onToolFinish?.({ name: functionName, args: functionArgs, result: blockedResult, success: false, step });
+          return { role: "tool", tool_call_id: toolCall.id, content: JSON.stringify(blockedResult) };
         }
 
         await onToolStart?.({ name: functionName, args: functionArgs, step });
         const result = await executeTool(functionName, functionArgs);
-        await onToolFinish?.({
-          name: functionName,
-          args: functionArgs,
-          result,
-          success: result?.success !== false && !result?.error && !result?.blocked,
-          step,
-        });
+        await onToolFinish?.({ name: functionName, args: functionArgs, result, success: result?.success !== false && !result?.error && !result?.blocked, step });
 
-        // Lock deploy_position after first attempt regardless of outcome — retrying is never right
-        // For close/swap: only lock on success so genuine failures can be retried
         if (NO_RETRY_TOOLS.has(functionName)) firedOnce.add(functionName);
         else if (ONCE_PER_SESSION.has(functionName) && result.success === true) firedOnce.add(functionName);
 
-        return {
-          role: "tool",
-          tool_call_id: toolCall.id,
-          content: JSON.stringify(result),
-        };
+        return { role: "tool", tool_call_id: toolCall.id, content: JSON.stringify(result) };
       }));
 
       messages.push(...toolResults);
     } catch (error) {
       log("error", `Agent loop error at step ${step}: ${error.message}`);
-
-      // If it's a rate limit, wait and retry
       if (error.status === 429) {
-        log("agent", "Rate limited, waiting 30s...");
-        await sleep(30000);
+        log("agent", "Rate limited — waiting 30s");
+        await new Promise(r => setTimeout(r, 30000));
         continue;
       }
-
-      // For other errors, break the loop
       throw error;
     }
   }
 
-  log("agent", "Max steps reached without final answer");
-  return { content: "Max steps reached. Review logs for partial progress.", userMessage: goal };
+  log("agent", "Max steps reached");
+  return { content: "Max steps reached. Review logs.", userMessage: goal };
 }
 
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
