@@ -8,6 +8,20 @@ import { getAgentMeridianBase, getAgentMeridianHeaders } from "./agent-meridian.
 
 const DATAPI_JUP = "https://datapi.jup.ag/v1";
 
+// ─── Simple rate limiter (shared with token.js via sequential calls) ───
+let _lastDataPiCall = 0;
+const DATAPI_MIN_INTERVAL_MS = 1000;
+
+async function rateLimitedDataPiFetch(url) {
+  const now = Date.now();
+  const elapsed = now - _lastDataPiCall;
+  if (elapsed < DATAPI_MIN_INTERVAL_MS) {
+    await new Promise(r => setTimeout(r, DATAPI_MIN_INTERVAL_MS - elapsed));
+  }
+  _lastDataPiCall = Date.now();
+  return fetch(url);
+}
+
 const POOL_DISCOVERY_BASE = "https://pool-discovery-api.datapi.meteora.ag";
 const MIN_VOLATILITY_TIMEFRAME = "30m";
 const TIMEFRAME_MINUTES = {
@@ -221,7 +235,7 @@ async function applyVolatilityTimeframe(rawPools, sourceTimeframe) {
 }
 
 async function searchAssetsBySymbol(symbol) {
-  const res = await fetch(`${DATAPI_JUP}/assets/search?query=${encodeURIComponent(symbol)}`);
+  const res = await rateLimitedDataPiFetch(`${DATAPI_JUP}/assets/search?query=${encodeURIComponent(symbol)}`);
   if (!res.ok) throw new Error(`assets/search ${res.status}`);
   const data = await res.json();
   return Array.isArray(data) ? data : [data];
@@ -455,7 +469,7 @@ export async function discoverPools({
     if (missingDev.length > 0) {
       const devResults = await Promise.allSettled(
         missingDev.map((p) =>
-          fetch(`${DATAPI_JUP}/assets/search?query=${p.base.mint}`)
+          rateLimitedDataPiFetch(`${DATAPI_JUP}/assets/search?query=${p.base.mint}`)
             .then((r) => r.ok ? r.json() : null)
             .then((d) => {
               const t = Array.isArray(d) ? d[0] : d;
