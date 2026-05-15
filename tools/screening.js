@@ -6,21 +6,9 @@ import { isBaseMintOnCooldown, isPoolOnCooldown } from "../pool-memory.js";
 import { confirmIndicatorPreset } from "./chart-indicators.js";
 import { getAgentMeridianBase, getAgentMeridianHeaders } from "./agent-meridian.js";
 
+import { rateLimitedDataPiFetch } from "../utils/datapi-limiter.js";
+
 const DATAPI_JUP = "https://datapi.jup.ag/v1";
-
-// ─── Simple rate limiter (shared with token.js via sequential calls) ───
-let _lastDataPiCall = 0;
-const DATAPI_MIN_INTERVAL_MS = 1000;
-
-async function rateLimitedDataPiFetch(url) {
-  const now = Date.now();
-  const elapsed = now - _lastDataPiCall;
-  if (elapsed < DATAPI_MIN_INTERVAL_MS) {
-    await new Promise(r => setTimeout(r, DATAPI_MIN_INTERVAL_MS - elapsed));
-  }
-  _lastDataPiCall = Date.now();
-  return fetch(url);
-}
 
 const POOL_DISCOVERY_BASE = "https://pool-discovery-api.datapi.meteora.ag";
 const MIN_VOLATILITY_TIMEFRAME = "30m";

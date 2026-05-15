@@ -1,25 +1,13 @@
+import { rateLimitedDataPiFetch } from "../utils/datapi-limiter.js";
+
 const DATAPI_BASE = "https://datapi.jup.ag/v1";
-
-// ─── Simple rate limiter (1 req/s to avoid 403) ────────────────
-let _lastDataPiCall = 0;
-const DATAPI_MIN_INTERVAL_MS = 1000;
-
-async function rateLimitedFetch(url) {
-  const now = Date.now();
-  const elapsed = now - _lastDataPiCall;
-  if (elapsed < DATAPI_MIN_INTERVAL_MS) {
-    await new Promise(r => setTimeout(r, DATAPI_MIN_INTERVAL_MS - elapsed));
-  }
-  _lastDataPiCall = Date.now();
-  return fetch(url);
-}
 
 /**
  * Get the narrative/story behind a token from Jupiter ChainInsight.
  * Useful for understanding if a token has a real community/theme vs nothing.
  */
 export async function getTokenNarrative({ mint }) {
-  const res = await rateLimitedFetch(`${DATAPI_BASE}/chaininsight/narrative/${mint}`);
+  const res = await rateLimitedDataPiFetch(`${DATAPI_BASE}/chaininsight/narrative/${mint}`);
   if (!res.ok) throw new Error(`Narrative API error: ${res.status}`);
   const data = await res.json();
   return {
@@ -105,8 +93,8 @@ export async function getTokenInfo({ query }) {
 export async function getTokenHolders({ mint, limit = 20 }) {
   // Fetch holders and total supply in parallel
   const [holdersRes, tokenRes] = await Promise.all([
-    rateLimitedFetch(`${DATAPI_BASE}/holders/${mint}?limit=100`),
-    rateLimitedFetch(`${DATAPI_BASE}/assets/search?query=${mint}`),
+    rateLimitedDataPiFetch(`${DATAPI_BASE}/holders/${mint}?limit=100`),
+    rateLimitedDataPiFetch(`${DATAPI_BASE}/assets/search?query=${mint}`),
   ]);
   if (!holdersRes.ok) throw new Error(`Holders API error: ${holdersRes.status}`);
   const data = await holdersRes.json();
@@ -170,7 +158,7 @@ export async function getTokenHolders({ mint, limit = 20 }) {
 
       let pnl = null;
       try {
-        const pnlRes = await rateLimitedFetch(`${DATAPI_BASE}/pnl-positions?address=${h.addr}&assetId=${mint}`);
+        const pnlRes = await rateLimitedDataPiFetch(`${DATAPI_BASE}/pnl-positions?address=${h.addr}&assetId=${mint}`);
         if (pnlRes.ok) {
           const pnlData = await pnlRes.json();
           const pos = pnlData?.[h.addr]?.tokenPositions?.[0];
