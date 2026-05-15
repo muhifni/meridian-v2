@@ -340,11 +340,18 @@ console.log("\n── LLM Provider ───────────────
 
 const LLM_PROVIDERS = [
   {
-    label:   "OpenRouter   (openrouter.ai — many models)",
+    label:   "OpenRouter   (openrouter.ai — recommended, many models)",
     key:     "openrouter",
     baseUrl: "https://openrouter.ai/api/v1",
     keyHint: "sk-or-...",
-    modelDefault: "nousresearch/hermes-3-llama-3.1-405b",
+    modelDefault: "openrouter/healer-alpha",
+  },
+  {
+    label:   "SwiftRouter  (api.swiftrouter.com — OpenAI compatible, good Claude/Gemini/MiniMax)",
+    key:     "swiftrouter",
+    baseUrl: "https://api.swiftrouter.com/v1",
+    keyHint: "sk-... (SwiftRouter API key)",
+    modelDefault: "claude-sonnet-4-6",
   },
   {
     label:   "MiniMax      (api.minimax.io)",
@@ -380,8 +387,8 @@ const providerChoice = await askChoice("Select LLM provider:", LLM_PROVIDERS.map
 const provider = LLM_PROVIDERS.find((p) => p.key === providerChoice.key);
 
 let llmBaseUrl = provider.baseUrl;
-if (provider.key === "local" || provider.key === "custom") {
-  llmBaseUrl = await ask("Base URL", e("llmBaseUrl", provider.baseUrl || "http://localhost:1234/v1"));
+if (provider.key === "local" || provider.key === "custom" || provider.key === "swiftrouter") {
+  llmBaseUrl = await ask("Base URL", e("llmBaseUrl", provider.baseUrl));
 }
 
 const llmApiKeyExisting = e("llmApiKey", existingEnv.LLM_API_KEY || existingEnv.OPENROUTER_API_KEY || "");
