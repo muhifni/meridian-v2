@@ -432,8 +432,10 @@ export function stopPolling() {
 }
 
 // ─── Notification helpers ────────────────────────────────────────
-export async function notifyDeploy({ pair, amountSol, position, tx, priceRange, rangeCoverage, binStep, baseFee }) {
+export async function notifyDeploy({ pair, amountSol, position, tx, priceRange, rangeCoverage, binStep, baseFee, dryRun }) {
   if (hasActiveLiveMessage()) return;
+  const icon = dryRun ? "🧪" : "✅";
+  const label = dryRun ? "Deployed (DRY RUN)" : "Deployed";
   const priceStr = priceRange
     ? `Price range: ${priceRange.min < 0.0001 ? priceRange.min.toExponential(3) : priceRange.min.toFixed(6)} – ${priceRange.max < 0.0001 ? priceRange.max.toExponential(3) : priceRange.max.toFixed(6)}\n`
     : "";
@@ -443,14 +445,16 @@ export async function notifyDeploy({ pair, amountSol, position, tx, priceRange, 
   const poolStr = (binStep || baseFee)
     ? `Bin step: ${binStep ?? "?"}  |  Base fee: ${baseFee != null ? baseFee + "%" : "?"}\n`
     : "";
+  const posStr = dryRun
+    ? `Mode: DRY RUN — no real transaction sent\n`
+    : `Position: <code>${position?.slice(0, 8)}...</code>\nTx: <code>${tx?.slice(0, 16)}...</code>`;
   await sendHTML(
-    `✅ <b>Deployed</b> ${pair}\n` +
+    `${icon} <b>${label}</b> ${pair}\n` +
     `Amount: ${amountSol} SOL\n` +
     priceStr +
     coverageStr +
     poolStr +
-    `Position: <code>${position?.slice(0, 8)}...</code>\n` +
-    `Tx: <code>${tx?.slice(0, 16)}...</code>`
+    posStr
   );
 }
 
