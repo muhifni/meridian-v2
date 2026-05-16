@@ -14,6 +14,7 @@ Meridian menjalankan siklus screening dan management secara terus-menerus — me
 - **Manajemen posisi** — memantau, mengklaim fee, dan menutup posisi LP secara otonom; memutuskan STAY, CLOSE, atau REDEPLOY berdasarkan data live
 - **Belajar dari performa** — mempelajari top LPer di pool target, menyimpan pelajaran terstruktur, dan mengembangkan threshold screening berdasarkan riwayat posisi yang ditutup
 - **Smart wallet evolution** — secara otomatis menemukan wallet LP berkualitas dari data study, menambahkan yang bagus, dan membuang yang performanya menurun
+- **Dry run simulator** — mode demo account: saat `DRY_RUN=true`, agent melacak posisi virtual menggunakan data pasar real, mensimulasikan PnL, dan belajar dari setiap virtual close persis seperti posisi live
 - **Discord signals** — listener Discord opsional yang memantau channel LP Army untuk sinyal token Solana dan mengantrekannya untuk screening
 - **Telegram chat** — chat agent lengkap via Telegram, plus laporan siklus dan alert OOR
 - **Kiro integration** — jalankan screening dan management bertenaga AI langsung dari editor menggunakan steering files dan hooks
@@ -389,6 +390,7 @@ Catatan keamanan:
 | `/candidates` | Tampilkan kandidat terbaru yang di-cache |
 | `/deploy <n>` | Deploy kandidat berdasarkan index cache |
 | `/smart_wallets` | Daftar smart wallet yang di-track |
+| `/sim` | Virtual trading summary (dry run stats) |
 | `/briefing` | Morning briefing |
 | `/hive` | Status sinkronisasi HiveMind |
 | `/hive pull` | Manual HiveMind pull sekarang |
@@ -492,6 +494,23 @@ Setiap siklus screening, Meridian secara otomatis:
 
 Wallet yang ditambahkan secara manual tidak pernah dihapus otomatis.
 
+### Dry run simulator
+
+Saat `DRY_RUN=true`, Meridian berjalan sebagai **demo account** — semua screening dan decision-making berjalan normal, tapi tidak ada transaksi on-chain. Setiap kali agent memutuskan deploy, posisi virtual dibuat dan dilacak menggunakan data pasar real.
+
+Setiap management cycle, simulator:
+- Fetch data pool real untuk menghitung PnL simulasi
+- Terapkan exit rules yang sama (stop loss, trailing TP, OOR, low yield)
+- Saat virtual close: feed ke learning pipeline yang sama dengan posisi live
+
+Setelah 5 virtual closes, **config optimizer** menganalisis performa dan menambahkan saran penyesuaian config ke lessons — dikalibrasi ke saldo wallet saat ini.
+
+Semua data yang terkumpul selama dry run (lessons, pool memory, blacklist, signal weights) langsung dipakai saat kamu switch ke live.
+
+```bash
+/sim    # lihat virtual trading summary di Telegram
+```
+
 ---
 
 ## HiveMind
@@ -539,6 +558,7 @@ lessons.js            Learning engine: catat performa, turunkan pelajaran, evolu
 pool-memory.js        Riwayat deploy per pool + snapshot
 strategy-library.js   Strategi LP tersimpan
 wallet-evolution.js   Auto-discovery dan pruning smart wallet
+dry-run-simulator.js  Demo account mode — virtual positions + learning pipeline saat dry run
 telegram.js           Telegram bot: polling + notifikasi
 hivemind.js           Agent Meridian HiveMind sync
 smart-wallets.js      Tracker wallet KOL/alpha

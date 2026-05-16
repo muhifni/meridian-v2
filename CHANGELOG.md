@@ -2,6 +2,68 @@
 
 Semua perubahan penting pada proyek Meridian akan didokumentasikan di file ini.
 
+## [1.5.0] - 2026-05-17
+
+### Added
+- **dry-run-simulator.js**: Mode demo account untuk dry run
+  - `registerVirtualPosition()` — menyimpan posisi virtual ke `state.json` setelah dry-run deploy
+  - `evaluateVirtualPositions()` — dijalankan setiap management cycle, fetch data pool real, simulasi PnL via seeded mean-reverting random walk berdasarkan volatilitas real
+  - Menerapkan exit rules yang sama dengan live: stop loss, take profit, trailing TP, OOR, low yield
+  - Saat virtual close: feed ke full learning pipeline (lessons, threshold evolution, pool memory, Darwin weights, decision log)
+  - Auto-blacklist token + deployer saat fast stop loss (suspected rug)
+  - Config optimizer: setiap 5 virtual closes, analisis performa dan tambahkan saran ke lessons dikalibrasi ke saldo wallet saat ini
+  - `getVirtualSummary()` — win rate, avg PnL, ringkasan posisi open/closed
+- **wallet-evolution.js**: Auto-discovery dan pruning smart wallet
+  - Discover top LPer dari study data setiap screening cycle
+  - Auto-add wallet dengan win rate ≥70%, minimal 2 posisi, avg PnL ≥20%
+  - Update statistik wallet yang sudah di-track dengan rolling weighted average
+  - Auto-remove wallet dengan win rate <40% setelah ≥5 posisi, atau tidak terlihat >30 hari
+  - Wallet `source: "manual"` tidak pernah dihapus otomatis
+  - Max 30 wallet untuk menjaga RPC check tetap cepat
+- **Telegram command `/sim`** — tampilkan virtual trading summary (dry run stats)
+- **Telegram command `/smart_wallets`** — daftar smart wallet yang di-track dengan stats
+- **`.kiro/steering/changelog-rules.md`** — aturan update CHANGELOG dan README otomatis di-include setiap sesi
+
+### Changed
+- `smart-wallets.js`: `addSmartWallet()` sekarang menerima field `source` dan `stats` untuk membedakan wallet manual vs auto
+- `index.js`: Integrasi dry-run simulator ke screening cycle (register virtual position) dan management cycle (evaluate virtual positions)
+- `index.js`: Integrasi wallet evolution di akhir setiap screening cycle (background async)
+- `agent.js`: SCREENER tidak lagi diblokir oleh `mustUseRealTool` — LLM bisa menjawab "no deploy" tanpa tool call
+- `agent.js`: `tool_choice=required` dikecualikan untuk SCREENER di step 0
+- `utils/datapi-limiter.js`: Ganti time-gate dengan promise queue agar parallel `Promise.allSettled` benar-benar serialized; tambah `x-api-key` header ke semua request `datapi.jup.ag`
+
+### Fixed
+- Screening cycle tidak lagi return error "I couldn't complete that reliably because no tool call was made" ketika LLM memutuskan tidak ada kandidat yang layak
+- `datapi.jup.ag` 403 error pada `get_token_holders` dan `get_token_narrative` akibat concurrent requests yang burst rate limit
+
+### Technical
+- Virtual positions disimpan di `state.json` dengan flag `{ virtual: true }` — tidak terlihat oleh real position tracker
+- Riwayat virtual closes diarsipkan di `virtual-positions.json`
+- Promise queue di datapi-limiter memastikan max 1 request/1.1 detik secara global across semua callers
+- `smart-wallets.json` dan `virtual-positions.json` sudah di-gitignore
+
+---
+
+## [1.4.0] - 2026-05-17
+
+### Added
+- **README.md**: Diperbarui lengkap dengan konten dari upstream — arsitektur, agent harness, decision log, Discord listener, HiveMind, config reference, PM2, disclaimer, smart wallet evolution, `/smart_wallets` command
+
+---
+
+## [1.3.0] - 2026-05-17
+
+### Added
+- **`.kiro/`**: Migrasi dari `.claude/` ke Kiro IDE
+  - `steering/project.md` — konteks proyek selalu di-include (dari CLAUDE.md)
+  - `steering/agent-manager.md` — panduan agent manager (manual inclusion)
+  - `steering/agent-screener.md` — panduan agent screener (manual inclusion)
+  - `steering/commands.md` — semua CLI quick commands (manual inclusion)
+  - `hooks/no-background-exec.kiro.hook` — blokir background shell execution
+  - `hooks/protect-env.kiro.hook` — blokir write ke file `.env`
+
+---
+
 ## [1.2.0] - 2026-05-15
 
 ### Added
