@@ -2,6 +2,15 @@
 
 Semua perubahan penting pada proyek Meridian akan didokumentasikan di file ini.
 
+## [1.5.2] - 2026-05-17
+
+### Fixed
+- `smart-wallets.js`: `saveWallets()` sekarang wrapped try-catch — EACCES permission error tidak lagi crash wallet evolution, hanya log warning
+- `smart-wallets.js`: tambah `initSmartWalletsFile()` yang dipanggil saat startup untuk memastikan `smart-wallets.json` ada sebelum wallet evolution mencoba menulis
+- `index.js`: panggil `initSmartWalletsFile()` di startup block sehingga file selalu ada di VPS meski tidak ada di git (karena di-gitignore)
+
+---
+
 ## [1.5.1] - 2026-05-17
 
 ### Fixed

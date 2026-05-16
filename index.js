@@ -28,7 +28,7 @@ import { generateBriefing } from "./briefing.js";
 import { getLastBriefingDate, setLastBriefingDate, getTrackedPosition, getTrackedPositions, setPositionInstruction, updatePnlAndCheckExits, queuePeakConfirmation, resolvePendingPeak, queueTrailingDropConfirmation, resolvePendingTrailingDrop } from "./state.js";
 import { getActiveStrategy } from "./strategy-library.js";
 import { recordPositionSnapshot, recallForPool, addPoolNote } from "./pool-memory.js";
-import { checkSmartWalletsOnPool, listSmartWallets } from "./smart-wallets.js";
+import { checkSmartWalletsOnPool, listSmartWallets, initSmartWalletsFile } from "./smart-wallets.js";
 import { evolveSmartWallets } from "./wallet-evolution.js";
 import { registerVirtualPosition, evaluateVirtualPositions, getVirtualSummary } from "./dry-run-simulator.js";
 import { getTokenNarrative, getTokenInfo } from "./tools/token.js";
@@ -47,6 +47,7 @@ if (isMain) {
   log("startup", `Mode: ${process.env.DRY_RUN === "true" ? "DRY RUN" : "LIVE"}`);
   log("startup", `Model: ${process.env.LLM_MODEL || "hermes-3-405b"}`);
   ensureAgentId();
+  initSmartWalletsFile();
   bootstrapHiveMind().catch((error) => log("hivemind_warn", `Bootstrap failed: ${error.message}`));
   startHiveMindBackgroundSync();
 }

@@ -16,7 +16,26 @@ function loadWallets() {
 }
 
 function saveWallets(data) {
-  fs.writeFileSync(WALLETS_PATH, JSON.stringify(data, null, 2));
+  try {
+    fs.writeFileSync(WALLETS_PATH, JSON.stringify(data, null, 2));
+  } catch (err) {
+    log("smart_wallets_warn", `Failed to save smart-wallets.json: ${err.message}`);
+  }
+}
+
+/**
+ * Ensure smart-wallets.json exists with an empty wallet list.
+ * Called on startup to avoid permission errors on first write.
+ */
+export function initSmartWalletsFile() {
+  if (!fs.existsSync(WALLETS_PATH)) {
+    try {
+      fs.writeFileSync(WALLETS_PATH, JSON.stringify({ wallets: [] }, null, 2));
+      log("smart_wallets", "Created empty smart-wallets.json");
+    } catch (err) {
+      log("smart_wallets_warn", `Could not create smart-wallets.json: ${err.message}. Smart wallet tracking will be disabled.`);
+    }
+  }
 }
 
 const SOLANA_PUBKEY_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
