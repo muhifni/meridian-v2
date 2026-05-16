@@ -2,6 +2,15 @@
 
 Semua perubahan penting pada proyek Meridian akan didokumentasikan di file ini.
 
+## [1.5.3] - 2026-05-17
+
+### Fixed
+- `state.js`: `syncOpenPositions()` crash dengan `TypeError: Cannot read properties of undefined (reading 'push')` karena virtual position tidak punya field `notes`. Fix: defensive `if (!Array.isArray(pos.notes)) pos.notes = []` sebelum push
+- `state.js`: virtual positions sekarang di-skip oleh `syncOpenPositions()` — mereka tidak pernah ada on-chain jadi tidak boleh di-auto-close oleh sync
+- `dry-run-simulator.js`: virtual position sekarang dibuat dengan `notes: []` untuk konsistensi dengan struktur position normal
+
+---
+
 ## [1.5.2] - 2026-05-17
 
 ### Fixed

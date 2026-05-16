@@ -100,6 +100,7 @@ export function registerVirtualPosition(deployResult, poolCandidate, deployAmoun
     peak_pnl_pct: 0,
     trailing_active: false,
     closed: false,
+    notes: [],
     virtual: true,
     signal_snapshot: {
       fee_tvl_ratio: poolCandidate?.fee_active_tvl_ratio,

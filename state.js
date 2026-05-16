@@ -499,6 +499,9 @@ export function syncOpenPositions(active_addresses) {
     const pos = state.positions[posId];
     if (pos.closed || activeSet.has(posId)) continue;
 
+    // Virtual positions (dry run simulator) are never on-chain — skip sync
+    if (pos.virtual) continue;
+
     // Grace period: newly deployed positions may not be indexed yet
     const deployedAt = pos.deployed_at ? new Date(pos.deployed_at).getTime() : 0;
     if (Date.now() - deployedAt < SYNC_GRACE_MS) {
@@ -508,6 +511,7 @@ export function syncOpenPositions(active_addresses) {
 
     pos.closed = true;
     pos.closed_at = new Date().toISOString();
+    if (!Array.isArray(pos.notes)) pos.notes = [];
     pos.notes.push(`Auto-closed during state sync (not found on-chain)`);
     changed = true;
     log("state", `Position ${posId} auto-closed (missing from on-chain data)`);
