@@ -1,13 +1,13 @@
 {
   "name": "Protect .env Files",
   "version": "1.0.0",
-  "description": "Blocks reading .env and .env.* files to prevent accidental secret exposure",
+  "description": "Blocks writing to .env and .env.* files to prevent accidental secret exposure",
   "when": {
     "type": "preToolUse",
-    "toolTypes": ["read"]
+    "toolTypes": ["write"]
   },
   "then": {
     "type": "askAgent",
-    "prompt": "Check if this read operation is targeting a .env file (exactly '.env' or matching '.env.*' pattern like '.env.local', '.env.production', etc.). If it IS a .env file, deny the operation with reason: 'Reading .env files is blocked to prevent secret exposure — reference keys by name only.' If it is NOT a .env file, proceed normally."
+    "prompt": "Check if this write operation is targeting a .env file (exactly '.env' or matching '.env.*' pattern like '.env.local', '.env.production', etc.). If it IS a .env file, deny the operation with reason: 'Writing .env files is blocked to prevent accidental secret exposure.' If it is NOT a .env file, proceed normally."
   }
 }
