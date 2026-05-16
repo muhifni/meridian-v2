@@ -2,6 +2,13 @@
 
 Semua perubahan penting pada proyek Meridian akan didokumentasikan di file ini.
 
+## [1.5.1] - 2026-05-17
+
+### Fixed
+- `tools/token.js`: `global_fees_sol` selalu `null` saat official Jupiter API berhasil karena field ini tidak tersedia di official API. Sekarang di-enrich dari `datapi.jup.ag` secara paralel setelah official API call, sehingga `fees_sol` tidak lagi tampil sebagai `?` di screening report dan hard gate `fees_sol >= 35` bisa dievaluasi dengan benar.
+
+---
+
 ## [1.5.0] - 2026-05-17
 
 ### Added

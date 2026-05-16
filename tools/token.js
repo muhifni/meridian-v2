@@ -34,9 +34,17 @@ export async function getTokenInfo({ query }) {
       // Enrich first result with OKX smart money + risk data
       if (results[0]?.mint) {
         const { getAdvancedInfo, getClusterList } = await import("./okx.js");
-        const [adv, clusters] = await Promise.all([
+        const [adv, clusters, feesData] = await Promise.all([
           getAdvancedInfo(results[0].mint).catch(() => null),
           getClusterList(results[0].mint).catch(() => []),
+          // global_fees_sol not available in official API — fetch from datapi
+          rateLimitedDataPiFetch(`${DATAPI_BASE}/assets/search?query=${encodeURIComponent(results[0].mint)}`)
+            .then(r => r.ok ? r.json() : null)
+            .then(d => {
+              const t = Array.isArray(d) ? d[0] : d;
+              return t?.fees != null ? parseFloat(t.fees.toFixed(2)) : null;
+            })
+            .catch(() => null),
         ]);
         if (adv) {
           results[0].risk_level      = adv.risk_level;
@@ -51,6 +59,9 @@ export async function getTokenInfo({ query }) {
           results[0].kol_in_clusters   = clusters.some((c) => c.has_kol);
           results[0].top_cluster_trend = clusters[0]?.trend ?? null;
           results[0].clusters          = clusters;
+        }
+        if (feesData != null) {
+          results[0].global_fees_sol = feesData;
         }
       }
       return { found: true, query, results };
