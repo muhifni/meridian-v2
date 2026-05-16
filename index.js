@@ -30,6 +30,7 @@ import { getActiveStrategy } from "./strategy-library.js";
 import { recordPositionSnapshot, recallForPool, addPoolNote } from "./pool-memory.js";
 import { checkSmartWalletsOnPool, listSmartWallets } from "./smart-wallets.js";
 import { evolveSmartWallets } from "./wallet-evolution.js";
+import { registerVirtualPosition, evaluateVirtualPositions, getVirtualSummary } from "./dry-run-simulator.js";
 import { getTokenNarrative, getTokenInfo } from "./tools/token.js";
 import { stageSignals } from "./signal-tracker.js";
 import { getWeightsSummary } from "./signal-weights.js";
@@ -211,6 +212,22 @@ export async function runManagementCycle({ silent = false } = {}) {
     if (!silent && telegramEnabled()) {
       liveMessage = await createLiveMessage("🔄 Management Cycle", "Evaluating positions...");
     }
+
+    // ── Dry Run Simulator — evaluate virtual positions ────────────
+    if (process.env.DRY_RUN === "true") {
+      evaluateVirtualPositions().then((closes) => {
+        if (closes.length > 0) {
+          const lines = closes.map(c =>
+            `📊 [SIM] ${c.pool_name}: ${c.pnl_pct >= 0 ? "+" : ""}${c.pnl_pct}% (${c.reason?.split(":")[0]})`
+          );
+          log("simulator", `Virtual closes this cycle: ${closes.length}`);
+          if (telegramEnabled()) {
+            sendMessage(`🎮 Dry Run Simulator\n\n${lines.join("\n")}`).catch(() => {});
+          }
+        }
+      }).catch(e => log("simulator_warn", `Virtual evaluation error: ${e.message}`));
+    }
+
     const livePositions = await getMyPositions({ force: true }).catch(() => null);
     positions = livePositions?.positions || [];
 
@@ -723,6 +740,22 @@ IMPORTANT:
         if (evo.added.length)   log("wallet_evo", `Auto-added: ${evo.added.join(", ")}`);
         if (evo.removed.length) log("wallet_evo", `Auto-removed: ${evo.removed.join(", ")}`);
       }).catch((e) => log("wallet_evo", `Evolution error: ${e.message}`));
+    }
+
+    // ── Dry Run Simulator — register virtual position if deploy happened ──
+    const isDryRun = process.env.DRY_RUN === "true";
+    if (isDryRun && deploySucceeded) {
+      const deployedPool = passing.find(({ pool }) =>
+        content.includes(pool.pool) && content.includes("DEPLOYED")
+      );
+      if (deployedPool) {
+        const virtualId = registerVirtualPosition(
+          { dry_run: true, would_deploy: { pool_address: deployedPool.pool.pool } },
+          deployedPool.pool,
+          deployAmount
+        );
+        if (virtualId) log("simulator", `Registered virtual position ${virtualId} for ${deployedPool.pool.name}`);
+      }
     }
   } catch (error) {
     log("cron_error", `Screening cycle failed: ${error.message}`);
@@ -1290,6 +1323,7 @@ function formatHelpText() {
     "/candidates — show latest cached candidates",
     "/deploy <n> — deploy candidate by cached index",
     "/smart_wallets — list tracked smart wallets",
+    "/sim — virtual trading summary (dry run stats)",
     "/briefing — morning briefing",
     "/hive — HiveMind sync status",
     "/hive pull — manual HiveMind pull now",
@@ -1604,6 +1638,11 @@ async function telegramHandler(msg) {
     } catch (e) {
       await sendMessage(`Error: ${e.message}`).catch(() => {});
     }
+    return;
+  }
+
+  if (text === "/sim") {
+    await sendMessage(getVirtualSummary()).catch(() => {});
     return;
   }
 
