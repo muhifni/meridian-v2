@@ -2,6 +2,29 @@
 
 Semua perubahan penting pada proyek Meridian akan didokumentasikan di file ini.
 
+## [1.6.0] - 2026-05-17
+
+### Added
+- **causal-analysis.js**: Engine analisis kausal yang mengidentifikasi MENGAPA posisi profit atau loss
+  - Menganalisis 9 faktor: smart wallet presence, narrative quality, token age, volatility, fee_tvl_ratio, range efficiency, close reason patterns, hold duration, organic score
+  - Membandingkan win rate antar kelompok (dengan/tanpa smart wallet, berbagai range volatility, dll)
+  - Menghasilkan lessons actionable dengan rekomendasi config spesifik (misal: "raise minOrganic to 75")
+  - Deduplication otomatis — tidak menambah lesson yang sudah ada
+  - Menyimpan riwayat run di `causal-analysis.json`
+  - `getCausalAnalysisSummary()` — ringkasan untuk Telegram
+- **Telegram command `/analysis`** — tampilkan hasil causal analysis terbaru
+
+### Changed
+- `lessons.js`: `runCausalAnalysis()` dipanggil otomatis setiap 5 closes, bersamaan dengan `evolveThresholds()` dan Darwin weight recalculation
+- `index.js`: import dan expose `/analysis` command
+
+### Technical
+- Causal lessons diberi tag `["causal_analysis", type, confidence]` dan role-aware (SCREENER/MANAGER)
+- Minimum 5 samples untuk analysis, minimum 2 per bucket untuk kesimpulan
+- Effect threshold 0.25 (25% win rate difference) untuk dianggap signifikan
+
+---
+
 ## [1.5.4] - 2026-05-17
 
 ### Fixed

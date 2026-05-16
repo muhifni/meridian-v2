@@ -31,6 +31,7 @@ import { recordPositionSnapshot, recallForPool, addPoolNote } from "./pool-memor
 import { checkSmartWalletsOnPool, listSmartWallets, initSmartWalletsFile } from "./smart-wallets.js";
 import { evolveSmartWallets } from "./wallet-evolution.js";
 import { registerVirtualPosition, evaluateVirtualPositions, getVirtualSummary } from "./dry-run-simulator.js";
+import { getCausalAnalysisSummary } from "./causal-analysis.js";
 import { getTokenNarrative, getTokenInfo } from "./tools/token.js";
 import { stageSignals } from "./signal-tracker.js";
 import { getWeightsSummary } from "./signal-weights.js";
@@ -1325,6 +1326,7 @@ function formatHelpText() {
     "/deploy <n> — deploy candidate by cached index",
     "/smart_wallets — list tracked smart wallets",
     "/sim — virtual trading summary (dry run stats)",
+    "/analysis — causal analysis: why positions win or lose",
     "/briefing — morning briefing",
     "/hive — HiveMind sync status",
     "/hive pull — manual HiveMind pull now",
@@ -1644,6 +1646,11 @@ async function telegramHandler(msg) {
 
   if (text === "/sim") {
     await sendMessage(getVirtualSummary()).catch(() => {});
+    return;
+  }
+
+  if (text === "/analysis") {
+    await sendMessage(getCausalAnalysisSummary()).catch(() => {});
     return;
   }
 

@@ -181,6 +181,13 @@ export async function recordPerformance(perf) {
         log("evolve", `Darwin: adjusted ${wResult.changes.length} signal weight(s)`);
       }
     }
+
+    // Causal analysis — find WHY positions win or lose
+    const { runCausalAnalysis } = await import("./causal-analysis.js");
+    const causalResult = runCausalAnalysis(data.performance);
+    if (causalResult.lessons_added > 0) {
+      log("causal", `Added ${causalResult.lessons_added} causal lesson(s) from ${data.performance.length} closes`);
+    }
   }
 
   void pushHivePerformanceEvent({
