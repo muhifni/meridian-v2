@@ -255,6 +255,18 @@ export async function agentLoop(goal, maxSteps = config.llm.maxSteps, sessionHis
         msg.content = msg.content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
       }
 
+      // Some providers (e.g. SwiftRouter with Claude) return tool calls as XML
+      // in the content instead of structured tool_calls. Parse and convert them.
+      if (msg.content && !msg.tool_calls?.length && msg.content.includes("<tool_call>")) {
+        const xmlCalls = _parseXmlToolCalls(msg.content);
+        if (xmlCalls.length > 0) {
+          msg.tool_calls = xmlCalls;
+          // Strip the XML from content so it doesn't get sent to Telegram
+          msg.content = msg.content.replace(/<tool_call>[\s\S]*?<\/tool_call>/g, "").trim() || null;
+          log("agent", `Parsed ${xmlCalls.length} XML tool call(s) from content`);
+        }
+      }
+
       const invalidToolArgErrors = new Map();
       // Keep tool-call history API-valid, but never execute unrecoverable args.
       if (msg.tool_calls) {
@@ -412,4 +424,69 @@ export async function agentLoop(goal, maxSteps = config.llm.maxSteps, sessionHis
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Parse XML-style tool calls that some providers (e.g. SwiftRouter/Claude) emit
+ * in message content instead of structured tool_calls.
+ *
+ * Handles both formats:
+ *   <tool_call><function=name><parameter=key>value</parameter>...</function></tool_call>
+ *   <tool_call>{"name": "...", "arguments": {...}}</tool_call>
+ */
+function _parseXmlToolCalls(content) {
+  const calls = [];
+  const toolCallRegex = /<tool_call>([\s\S]*?)<\/tool_call>/g;
+  let match;
+
+  while ((match = toolCallRegex.exec(content)) !== null) {
+    const inner = match[1].trim();
+
+    // Format 1: JSON inside tool_call
+    if (inner.startsWith("{")) {
+      try {
+        const parsed = JSON.parse(inner);
+        const name = parsed.name || parsed.function;
+        const args = parsed.arguments || parsed.parameters || {};
+        if (name) {
+          calls.push({
+            id: `xml_${Date.now()}_${calls.length}`,
+            type: "function",
+            function: { name, arguments: JSON.stringify(args) },
+          });
+        }
+      } catch { /* malformed JSON, skip */ }
+      continue;
+    }
+
+    // Format 2: <function=name><parameter=key>value</parameter>...</function>
+    const funcMatch = inner.match(/<function=([^>]+)>([\s\S]*?)(?:<\/function>|$)/);
+    if (!funcMatch) continue;
+
+    const funcName = funcMatch[1].trim();
+    const paramContent = funcMatch[2];
+    const args = {};
+
+    // Extract closed <parameter=key>value</parameter>
+    const paramRegex = /<parameter=([^>]+)>([\s\S]*?)<\/parameter>/g;
+    let paramMatch;
+    while ((paramMatch = paramRegex.exec(paramContent)) !== null) {
+      const key = paramMatch[1].trim();
+      const val = paramMatch[2].trim();
+      if (val === "true") args[key] = true;
+      else if (val === "false") args[key] = false;
+      else if (val !== "" && !isNaN(Number(val))) args[key] = Number(val);
+      else args[key] = val;
+    }
+
+    if (funcName) {
+      calls.push({
+        id: `xml_${Date.now()}_${calls.length}`,
+        type: "function",
+        function: { name: funcName, arguments: JSON.stringify(args) },
+      });
+    }
+  }
+
+  return calls;
 }

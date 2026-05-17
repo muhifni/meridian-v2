@@ -2,6 +2,13 @@
 
 Semua perubahan penting pada proyek Meridian akan didokumentasikan di file ini.
 
+## [1.6.1] - 2026-05-17
+
+### Fixed
+- `agent.js`: XML-style tool calls dari SwiftRouter/Claude yang bocor ke content pesan sekarang di-parse dan dieksekusi dengan benar. Sebelumnya tool call dalam format `<tool_call><function=deploy_position>...` diabaikan dan muncul sebagai teks mentah di notif Telegram, menyebabkan deploy tidak terjadi.
+
+---
+
 ## [1.6.0] - 2026-05-17
 
 ### Added
