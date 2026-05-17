@@ -570,6 +570,10 @@ export async function deployPosition({
     );
   }
 
+  // Calculate bin IDs before DRY_RUN early return
+  const dryRunMinBinId = activeBin.binId - activeBinsBelow;
+  const dryRunMaxBinId = isSingleSidedSol ? activeBin.binId : activeBin.binId + activeBinsAbove;
+
   if (process.env.DRY_RUN === "true") {
     return {
       success: true,
@@ -589,16 +593,16 @@ export async function deployPosition({
         // Store current price for PnL calculation in dry-run-simulator
         price: activePrice,
         active_bin: activeBin?.binId ?? null,
-        lower_bin: minBinId,
-        upper_bin: maxBinId,
+        lower_bin: dryRunMinBinId,
+        upper_bin: dryRunMaxBinId,
       },
       message: "DRY RUN — no transaction sent. Deploy recorded as successful for simulation purposes. Do NOT call deploy_position again.",
     };
   }
 
   const isWideRange = totalBins > 69;
-  const minBinId = activeBin.binId - activeBinsBelow;
-  const maxBinId = isSingleSidedSol ? activeBin.binId : activeBin.binId + activeBinsAbove;
+  const minBinId = dryRunMinBinId;
+  const maxBinId = dryRunMaxBinId;
 
   if (minBinId > maxBinId) {
     throw new Error(`Invalid bin range: ${minBinId} -> ${maxBinId}`);
