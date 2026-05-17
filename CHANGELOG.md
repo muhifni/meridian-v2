@@ -13,6 +13,11 @@ Semua perubahan penting pada proyek Meridian akan didokumentasikan di file ini.
   5. Logging untuk debugging: `priceSource` sekarang di-log (real_from_api, api_5m, api_1h, simulation)
   6. Clamp price change ke [-95%, 200%] untuk realistic bounds
 
+- `tools/token.js`: Fallback ke OKX API untuk `global_fees_sol` jika datapi gagal:
+  - Di `getTokenInfo()` - sekarang coba OKX `total_fee_sol` jika datapi fees null
+  - Di `getTokenHolders()` - sama fallback-nya
+  - Fallback juga di `searchToken()` (Jupiter official API)
+
 ### Technical
 - Tambahan return fields: `price_change_pct` dan `price_source` di `_evaluatePosition()` output
 
