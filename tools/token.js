@@ -128,6 +128,10 @@ export async function getTokenInfo({ query }) {
       results[0].new_wallet_pct  = adv.new_wallet_pct;
       results[0].smart_money_buy = adv.smart_money_buy;
       results[0].tags            = adv.tags;
+      // Fallback: use OKX total_fee_sol if datapi fails
+      if (adv.total_fee_sol != null && results[0].global_fees_sol == null) {
+        results[0].global_fees_sol = adv.total_fee_sol;
+      }
     }
     if (clusters?.length) {
       results[0].kol_in_clusters   = clusters.some((c) => c.has_kol);
