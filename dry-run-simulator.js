@@ -194,15 +194,33 @@ async function _evaluatePosition(pos) {
   const minutes_held = Math.floor((now - deployedAt) / 60000);
   const hours_held = minutes_held / 60;
 
-  // Estimate fees earned from real fee/TVL ratio
+  // ── Fee estimation ────────────────────────────────────────────
+  // fee_active_tvl_ratio is per-timeframe (5m). Convert to per-hour:
+  // 5m timeframe → 12 periods/hour → hourly_fee_tvl = ratio * 12
+  // Then scale by hours held with a realistic capture rate (0.7 = 70% of fees go to LPs)
   const currentFeeTvl = poolData?.fee_active_tvl_ratio ?? pos.fee_tvl_ratio ?? 0;
-  const estimated_fee_pct = Math.min(currentFeeTvl * hours_held * 0.5, 50);
+  const periodsPerHour = 12; // for 5m timeframe
+  const hourlyFeeTvl = currentFeeTvl * periodsPerHour;
+  const estimated_fee_pct = Math.min(hourlyFeeTvl * hours_held * 0.7, 80);
   const fees_usd = (pos.initial_value_usd ?? 0) * (estimated_fee_pct / 100);
 
-  // Simulate price change using seeded random walk based on real volatility
-  const volatility = pos.volatility ?? 2;
-  const priceChangePct = _simulatePriceChange(pos, volatility, minutes_held);
-  const pnl_pct = priceChangePct + estimated_fee_pct;
+  // ── Price change estimation ───────────────────────────────────
+  // Use real price data from pool if available, otherwise simulate.
+  let priceChangePct = 0;
+  if (poolData?.price_change_pct != null) {
+    priceChangePct = Number(poolData.price_change_pct);
+  } else if (poolData?.stats_1h?.price_change != null) {
+    priceChangePct = Number(poolData.stats_1h.price_change);
+  } else {
+    // Fallback: unbiased simulation with time-varying seed
+    const volatility = pos.volatility ?? 2;
+    priceChangePct = _simulatePriceChange(pos, volatility, minutes_held, now);
+  }
+
+  // For single-sided SOL bid_ask: IL is asymmetric.
+  // Simplified: PnL = fees - IL, where IL ≈ 0.5 * |priceChange| for concentrated liquidity
+  const ilPct = Math.max(0, Math.abs(priceChangePct) * 0.5 - estimated_fee_pct * 0.3);
+  const pnl_pct = estimated_fee_pct - ilPct + (priceChangePct > 0 ? priceChangePct * 0.1 : 0);
   const pnl_usd = (pos.initial_value_usd ?? 0) * (pnl_pct / 100);
 
   // Determine if in range
@@ -256,18 +274,22 @@ async function _evaluatePosition(pos) {
 }
 
 /**
- * Simulate price change using a mean-reverting random walk.
- * Seeded by position ID + time bucket for reproducibility.
+ * Simulate price change using an unbiased random walk.
+ * Uses time-varying seed (bucketed to 12-min intervals) so each
+ * management cycle gets a different but reproducible result.
  */
-function _simulatePriceChange(pos, volatility, minutes_held) {
-  const seed = pos.position.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+function _simulatePriceChange(pos, volatility, minutes_held, now = Date.now()) {
+  const posSeed = pos.position.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  // Bucket time to 12-minute intervals so result changes each management cycle
+  const timeBucket = Math.floor(now / (12 * 60 * 1000));
+  const seed = posSeed + timeBucket;
   const steps = Math.min(minutes_held, 120);
   let price = 0;
   for (let i = 0; i < steps; i++) {
-    const s = _lcg(seed + i);
-    const shock = (s - 0.5) * volatility * 0.6;
-    const meanReversion = -price * 0.04;
-    price += shock + meanReversion;
+    // Unbiased: shock centered at 0, no mean reversion bias
+    const s = _lcg(seed + i * 7919); // prime multiplier for better distribution
+    const shock = (s - 0.5) * 2 * volatility * 0.4;
+    price += shock;
   }
   return Math.max(-95, Math.min(200, price));
 }

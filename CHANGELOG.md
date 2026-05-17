@@ -2,6 +2,18 @@
 
 Semua perubahan penting pada proyek Meridian akan didokumentasikan di file ini.
 
+## [1.6.2] - 2026-05-17
+
+### Fixed
+- `dry-run-simulator.js`: PnL simulasi tidak akurat karena dua bug:
+  1. `estimated_fee_pct` dihitung dari `fee_tvl_ratio * hours * 0.5` — terlalu konservatif. Sekarang dikonversi dengan benar: `fee_tvl_ratio * 12 periods/hour * hours * 0.7` (12 = jumlah periode 5m per jam, 0.7 = LP capture rate)
+  2. `_simulatePriceChange` menggunakan mean reversion ke 0 yang menyebabkan bias negatif. Sekarang menggunakan unbiased random walk dengan seed yang berubah per management cycle (12-menit bucket) sehingga hasil bervariasi
+  3. PnL sekarang menggunakan harga real dari pool (`price_change_pct` atau `stats_1h.price_change`) jika tersedia, dengan simulasi sebagai fallback
+  4. Model PnL diperbaiki: `fees - IL + upside_capture` alih-alih `price_change + fees`
+- `user-config.json`: `minFeePerTvl24h` turun dari 8 ke 4 berdasarkan data virtual closes
+
+---
+
 ## [1.6.1] - 2026-05-17
 
 ### Fixed
