@@ -8,12 +8,13 @@ import {
 import bs58 from "bs58";
 import { log } from "../logger.js";
 import { config } from "../config.js";
+import { createCachedConnection } from "../utils/rpc-cache.js";
 
 let _connection = null;
 let _wallet = null;
 
 function getConnection() {
-  if (!_connection) _connection = new Connection(process.env.RPC_URL, "confirmed");
+  if (!_connection) _connection = createCachedConnection(process.env.RPC_URL, "confirmed");
   return _connection;
 }
 

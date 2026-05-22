@@ -44,3 +44,7 @@ discord-signals.json
 
 # telegram
 telegram-history/*
+
+# Runtime virtual positions
+virtual-positions.json
+causal-analysis.json

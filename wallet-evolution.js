@@ -1,20 +1,31 @@
 /**
  * Smart Wallet Evolution
  *
- * Automatically discovers high-quality LP wallets from study data and
- * prunes underperforming ones. Runs at the end of each screening cycle.
+ * Automatically discovers high-quality LP wallets from study data AND
+ * high-quality holder wallets from token holder analysis.
+ * Prunes underperforming ones. Runs at the end of each screening cycle.
  *
- * Add criteria:
+ * Add criteria (LP discovery):
  *   - win_rate >= 0.70
- *   - total_positions >= 2  (enough sample to trust)
+ *   - total_positions >= 3  (increased from 2 — need more data to trust)
  *   - avg_pnl_pct >= 20%
+ *
+ * Add criteria (Holder discovery):
+ *   - Found in KOL cluster or OKX smart money
+ *   - Associated with a pool that passed screening
+ *
+ * Confidence scoring:
+ *   - Wallets with < 5 positions get a confidence penalty
+ *   - Wallets with >= 10 positions are highly trusted
+ *   - Stale (>30d) wallets get de-prioritized
  *
  * Remove criteria:
  *   - win_rate < 0.40 AND total_positions_observed >= 5
  *   - not seen in any pool for > 30 days (stale)
  *
  * Limits:
- *   - Max 30 wallets total
+ *   - Max 30 wallets total for LP type
+ *   - Max 20 wallets total for holder type
  *   - Manually-added wallets (source !== "auto") are never auto-removed
  */
 
@@ -22,32 +33,63 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { log } from "./logger.js";
-import { addSmartWallet, removeSmartWallet, listSmartWallets } from "./smart-wallets.js";
+import { addSmartWallet, removeSmartWallet, listSmartWallets, getWalletConfidence } from "./smart-wallets.js";
 import { studyTopLPers } from "./tools/study.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WALLETS_PATH = path.join(__dirname, "smart-wallets.json");
 
-const MAX_WALLETS          = 30;
-const MIN_WIN_RATE_ADD     = 0.70;
-const MIN_POSITIONS_ADD    = 2;
-const MIN_AVG_PNL_ADD      = 20;   // percent
+const MAX_LP_WALLETS     = 30;
+const MAX_HOLDER_WALLETS = 20;
+const MIN_WIN_RATE_ADD   = 0.70;
+const MIN_POSITIONS_ADD  = 3;   // Increased from 2 — need at least 3 data points
+const MIN_AVG_PNL_ADD    = 20;  // percent
 const MAX_WIN_RATE_REMOVE  = 0.40;
-const MIN_POSITIONS_REMOVE = 5;    // need enough data before removing
+const MIN_POSITIONS_REMOVE = 5; // enough data before removing
 const STALE_DAYS           = 30;
 
 /**
  * Run wallet evolution for a list of pool addresses (top candidates from screening).
- * Discovers new wallets from study data, prunes bad ones.
+ * Discovers new LP wallets from study data, plus holder wallets from token analysis.
  *
  * @param {string[]} poolAddresses - Pool addresses to study (top 3 from screening)
+ * @param {object[]} [candidatePools] - Full candidate pool objects (for holder discovery via token analysis)
  * @returns {{ added: string[], removed: string[], skipped: number }}
  */
-export async function evolveSmartWallets(poolAddresses = []) {
+export async function evolveSmartWallets(poolAddresses = [], candidatePools = []) {
   const result = { added: [], removed: [], skipped: 0 };
-  if (!poolAddresses.length) return result;
 
-  // ── 1. Discover candidates from study data ──────────────────────
+  // ── 1. Discover LP wallet candidates from LPAgent study data ──
+  if (poolAddresses.length) {
+    const lpResult = await discoverLpWallets(poolAddresses);
+    result.added.push(...lpResult.added);
+    result.skipped += lpResult.skipped;
+  }
+
+  // ── 2. Discover holder wallet candidates from token analysis ──
+  if (candidatePools.length) {
+    const holderResult = await discoverHolderWallets(candidatePools);
+    result.added.push(...holderResult.added);
+    result.skipped += holderResult.skipped;
+  }
+
+  // ── 3. Prune underperforming / stale wallets ──
+  const pruneResult = pruneBadWallets();
+  result.removed.push(...pruneResult);
+
+  const totalAfter = listSmartWallets().wallets.length;
+  if (result.added.length || result.removed.length) {
+    log("wallet_evo", `Evolution complete — added: ${result.added.length}, removed: ${result.removed.length}, total: ${totalAfter}`);
+  }
+
+  return result;
+}
+
+/**
+ * Discover LP wallets from LPAgent study data.
+ */
+async function discoverLpWallets(poolAddresses) {
+  const result = { added: [], skipped: 0 };
   const discovered = new Map(); // address → best summary seen across pools
 
   for (const poolAddr of poolAddresses.slice(0, 3)) {
@@ -76,7 +118,7 @@ export async function evolveSmartWallets(poolAddresses = []) {
     }
   }
 
-  // ── 2. Add qualifying new wallets ───────────────────────────────
+  // Check which qualify
   const { wallets: current } = listSmartWallets();
   const currentAddresses = new Set(current.map((w) => w.address));
 
@@ -88,22 +130,33 @@ export async function evolveSmartWallets(poolAddresses = []) {
       continue;
     }
 
+    // Stricter qualification: require win_rate and positions, BUT
+    // also apply confidence penalty — wallets with < 5 positions
+    // get their effective win rate discounted to avoid false positives
+    const effectiveWinRate = data.total_positions >= 5
+      ? data.win_rate
+      : data.win_rate * 0.85; // 15% discount for thin data
+
     const qualifies =
-      data.win_rate >= MIN_WIN_RATE_ADD &&
+      effectiveWinRate >= MIN_WIN_RATE_ADD &&
       data.total_positions >= MIN_POSITIONS_ADD &&
       data.avg_pnl_pct >= MIN_AVG_PNL_ADD;
 
     if (!qualifies) continue;
 
-    // Check capacity
+    // Check capacity (LP type cap)
     const { wallets: fresh } = listSmartWallets();
-    if (fresh.length >= MAX_WALLETS) {
-      log("wallet_evo", `Wallet list full (${MAX_WALLETS}) — skipping ${address.slice(0, 8)}`);
+    const lpCount = fresh.filter((w) => !w.type || w.type === "lp").length;
+    if (lpCount >= MAX_LP_WALLETS) {
+      log("wallet_evo", `LP wallet list full (${MAX_LP_WALLETS}) — skipping ${address.slice(0, 8)}`);
       break;
     }
 
     const safeName = (data.pool_name || "pool").replace(/[^a-zA-Z0-9]/g, "").slice(0, 10);
     const name = `auto_${safeName}_${address.slice(0, 6)}`;
+
+    // Calculate confidence
+    const totalPositions = data.total_positions;
 
     const addResult = addSmartWallet({
       name,
@@ -113,7 +166,8 @@ export async function evolveSmartWallets(poolAddresses = []) {
       source: "auto",
       stats: {
         win_rate: data.win_rate,
-        total_positions_observed: data.total_positions,
+        effective_win_rate: effectiveWinRate,
+        total_positions_observed: totalPositions,
         avg_pnl_pct: data.avg_pnl_pct,
         preferred_strategy: data.preferred_strategy,
         first_seen_pool: data.pool,
@@ -122,12 +176,116 @@ export async function evolveSmartWallets(poolAddresses = []) {
     });
 
     if (addResult.success) {
-      log("wallet_evo", `Added ${name} — win_rate=${(data.win_rate * 100).toFixed(0)}%, positions=${data.total_positions}, avg_pnl=${data.avg_pnl_pct.toFixed(1)}%`);
+      log("wallet_evo", `Added ${name} — win_rate=${(data.win_rate * 100).toFixed(0)}%, eff_win_rate=${(effectiveWinRate * 100).toFixed(0)}%, positions=${totalPositions}, avg_pnl=${data.avg_pnl_pct.toFixed(1)}%`);
       result.added.push(name);
     }
   }
 
-  // ── 3. Prune underperforming / stale wallets ────────────────────
+  return result;
+}
+
+/**
+ * Discover holder-type wallets from token holder analysis.
+ * Checks OKX clusters for KOL-associated wallets in candidate pools.
+ */
+async function discoverHolderWallets(candidatePools) {
+  const result = { added: [], skipped: 0 };
+  const { getAdvancedInfo, getClusterList } = await import("./tools/okx.js");
+  const { wallets: current } = listSmartWallets();
+  const currentAddresses = new Set(current.map((w) => w.address));
+
+  for (const pool of candidatePools.slice(0, 3)) {
+    const baseMint = pool.base?.mint || pool.base_mint || null;
+    if (!baseMint) continue;
+
+    try {
+      const [adv, clusters] = await Promise.all([
+        getAdvancedInfo(baseMint).catch(() => null),
+        getClusterList(baseMint).catch(() => []),
+      ]);
+
+      if (!clusters?.length && (!adv || adv?.smart_money_buy !== "yes")) continue;
+
+      const poolName = pool.name || pool.base?.symbol || "pool";
+      let holderCandidates = [];
+
+      // From KOL clusters
+      if (clusters?.length) {
+        for (const cluster of clusters) {
+          if (cluster.has_kol && cluster.wallets?.length) {
+            for (const wallet of cluster.wallets.slice(0, 3)) {
+              const addr = wallet.address || wallet;
+              if (currentAddresses.has(addr)) continue;
+              holderCandidates.push({
+                address: addr,
+                cluster_trend: cluster.trend || "unknown",
+                holding_pct: cluster.holding_pct || null,
+              });
+            }
+          }
+        }
+      }
+
+      // From smart money dev
+      if (adv?.smart_money_buy === "yes" && adv?.creator) {
+        if (!currentAddresses.has(adv.creator)) {
+          holderCandidates.push({
+            address: adv.creator,
+            cluster_trend: "smart_money_dev",
+            holding_pct: null,
+          });
+        }
+      }
+
+      for (const hc of holderCandidates) {
+        // Check holder-type capacity
+        const { wallets: fresh } = listSmartWallets();
+        const holderCount = fresh.filter((w) => w.type === "holder").length;
+        if (holderCount >= MAX_HOLDER_WALLETS) {
+          log("wallet_evo", `Holder wallet list full (${MAX_HOLDER_WALLETS}) — skipping ${hc.address.slice(0, 8)}`);
+          break;
+        }
+
+        const safeName = poolName.replace(/[^a-zA-Z0-9]/g, "").slice(0, 8);
+        const name = `holder_${safeName}_${hc.address.slice(0, 6)}`;
+
+        const addResult = addSmartWallet({
+          name,
+          address: hc.address,
+          category: "alpha",
+          type: "holder",
+          source: "auto",
+          stats: {
+            win_rate: null, // No LP data for holders
+            effective_win_rate: null,
+            total_positions_observed: 0,
+            avg_pnl_pct: null,
+            cluster_trend: hc.cluster_trend,
+            holding_pct: hc.holding_pct,
+            discovered_from_pool: poolName,
+            last_seen: new Date().toISOString(),
+          },
+        });
+
+        if (addResult.success) {
+          log("wallet_evo", `Added holder ${name} — trend=${hc.cluster_trend}, pool=${poolName}`);
+          result.added.push(name);
+        }
+      }
+    } catch (err) {
+      log("wallet_evo", `Holder discovery failed for ${poolName || baseMint.slice(0, 8)}: ${err.message}`);
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Prune underperforming and stale wallet entries.
+ * @returns {string[]} Names of removed wallets
+ */
+function pruneBadWallets() {
+  const removed = [];
   const { wallets: afterAdd } = listSmartWallets();
   const staleThreshold = Date.now() - STALE_DAYS * 24 * 60 * 60 * 1000;
 
@@ -143,22 +301,23 @@ export async function evolveSmartWallets(poolAddresses = []) {
     const isUnderperforming = winRate < MAX_WIN_RATE_REMOVE && positions >= MIN_POSITIONS_REMOVE;
     const isStale = lastSeen < staleThreshold;
 
-    if (isUnderperforming || isStale) {
+    // Holder wallets with no positions observed and stale get pruned faster (14 days)
+    const isHolderStale = wallet.type === "holder" && positions === 0 &&
+      (Date.now() - lastSeen) > 14 * 24 * 60 * 60 * 1000;
+
+    if (isUnderperforming || isStale || isHolderStale) {
       const reason = isUnderperforming
         ? `win_rate ${(winRate * 100).toFixed(0)}% < ${MAX_WIN_RATE_REMOVE * 100}% after ${positions} positions`
-        : `not seen in ${STALE_DAYS} days`;
+        : isHolderStale
+          ? `holder wallet not seen in 14 days`
+          : `not seen in ${STALE_DAYS} days`;
       log("wallet_evo", `Removing ${wallet.name} — ${reason}`);
       removeSmartWallet({ address: wallet.address });
-      result.removed.push(wallet.name);
+      removed.push(wallet.name);
     }
   }
 
-  if (result.added.length || result.removed.length) {
-    const { wallets: final } = listSmartWallets();
-    log("wallet_evo", `Evolution complete — added: ${result.added.length}, removed: ${result.removed.length}, total: ${final.length}`);
-  }
-
-  return result;
+  return removed;
 }
 
 /**
@@ -182,6 +341,11 @@ function _updateWalletStats(address, newData) {
     stats.win_rate    = _lerp(stats.win_rate    ?? newData.win_rate,    newData.win_rate,    weight);
     stats.avg_pnl_pct = _lerp(stats.avg_pnl_pct ?? newData.avg_pnl_pct, newData.avg_pnl_pct, weight);
     stats.total_positions_observed = Math.max(prevN, newN);
+    // Recompute effective_win_rate
+    const totalP = stats.total_positions_observed ?? 0;
+    stats.effective_win_rate = totalP >= 5
+      ? stats.win_rate
+      : (stats.win_rate ?? 1) * 0.85;
     stats.last_seen = new Date().toISOString();
     wallet.stats = stats;
 

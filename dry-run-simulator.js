@@ -38,6 +38,28 @@ const oorWaitMinutes     = () => config.management.outOfRangeWaitMinutes ?? 25;
 const minFeePerTvl       = () => config.management.minFeePerTvl24h ?? 8;
 const minAgeYieldCheck   = () => config.management.minAgeBeforeYieldCheck ?? 60;
 
+// ─── SOL/USD price with caching ─────────────────────────────────
+let _cachedSolPrice = null;
+let _solPriceFetchedAt = 0;
+const SOL_PRICE_TTL = 15 * 60 * 1000; // 15 minutes
+
+async function _getSolPrice() {
+  const now = Date.now();
+  if (_cachedSolPrice && (now - _solPriceFetchedAt) < SOL_PRICE_TTL) return _cachedSolPrice;
+  try {
+    const { getWalletBalances } = await import("./tools/wallet.js");
+    const bal = await getWalletBalances();
+    if (bal?.sol_price > 0) {
+      _cachedSolPrice = bal.sol_price;
+      _solPriceFetchedAt = now;
+      return _cachedSolPrice;
+    }
+  } catch { /* fall through */ }
+  _cachedSolPrice = config.management?.solPrice ?? 85;
+  _solPriceFetchedAt = now;
+  return _cachedSolPrice;
+}
+
 // ─── State helpers ─────────────────────────────────────────────
 
 function loadState() {
@@ -69,11 +91,12 @@ function saveVirtualLog(data) {
  * @param {Object} poolCandidate - Pool candidate data from screening
  * @param {number} deployAmount  - SOL amount deployed
  */
-export function registerVirtualPosition(deployResult, poolCandidate, deployAmount) {
+export async function registerVirtualPosition(deployResult, poolCandidate, deployAmount) {
   if (!deployResult?.dry_run) return null;
 
   const positionId = `virtual_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const now = new Date().toISOString();
+  const solPrice = await _getSolPrice();
 
   const state = loadState();
 
@@ -94,7 +117,7 @@ export function registerVirtualPosition(deployResult, poolCandidate, deployAmoun
     fee_tvl_ratio: poolCandidate?.fee_active_tvl_ratio ?? null,
     organic_score: poolCandidate?.organic_score ?? null,
     initial_price: deployResult.would_deploy?.price ?? null,
-    initial_value_usd: deployAmount * 150, // rough SOL/USD estimate
+    initial_value_usd: deployAmount * solPrice,
     deployed_at: now,
     out_of_range_since: null,
     peak_pnl_pct: 0,
@@ -186,7 +209,7 @@ async function _evaluatePosition(pos) {
   const { getPoolDetail } = await import("./tools/screening.js");
   let poolData = null;
   try {
-    poolData = await getPoolDetail({ pool_address: pos.pool, timeframe: "5m" });
+    poolData = await getPoolDetail({ pool_address: pos.pool, timeframe: "1h" });
   } catch { /* use fallback */ }
 
   const now = Date.now();
@@ -280,9 +303,9 @@ async function _evaluatePosition(pos) {
   } else if (!in_range && oorMinutes >= oorWaitMinutes()) {
     shouldClose = true;
     reason = `oor: out of range ${oorMinutes}m >= ${oorWaitMinutes()}m`;
-  } else if (minutes_held >= minAgeYieldCheck() && currentFeeTvl < minFeePerTvl() / 100) {
+  } else if (minutes_held >= Math.max(minAgeYieldCheck(), 180) && estimated_fee_pct < 1.0) {
     shouldClose = true;
-    reason = `low_yield: fee/TVL ${(currentFeeTvl * 100).toFixed(2)}% < ${minFeePerTvl()}%`;
+    reason = `low_yield: cumulative fee ${estimated_fee_pct.toFixed(2)}% < 1.0% in ${minutes_held}m`;
   }
 
   return {
@@ -366,7 +389,7 @@ async function _closeVirtualPosition(pos, evaluation) {
     organic_score:     pos.organic_score,
     amount_sol:        pos.amount_sol,
     fees_earned_usd:   evaluation.fees_usd,
-    fees_earned_sol:   evaluation.fees_usd / 150,
+    fees_earned_sol:   evaluation.fees_usd / await _getSolPrice(),
     final_value_usd:   (pos.initial_value_usd ?? 0) + evaluation.pnl_usd,
     initial_value_usd: pos.initial_value_usd ?? 0,
     minutes_in_range:  evaluation.in_range
@@ -445,7 +468,8 @@ async function _optimizeConfig(closedPositions) {
     const recent  = closedPositions.slice(-20);
     const wins    = recent.filter(p => (p.final_pnl_pct ?? 0) > 0);
     const losses  = recent.filter(p => (p.final_pnl_pct ?? 0) < 0);
-    const winRate = recent.length > 0 ? wins.length / recent.length : 0;
+    const winDenom = wins.length + losses.length;
+    const winRate = winDenom > 0 ? wins.length / winDenom : 0;
     const avgPnl  = recent.reduce((s, p) => s + (p.final_pnl_pct ?? 0), 0) / (recent.length || 1);
     const avgHeld = recent.reduce((s, p) => s + (p.minutes_held ?? 0), 0) / (recent.length || 1);
 
@@ -532,8 +556,10 @@ export function getVirtualSummary() {
   ];
 
   if (closed.length > 0) {
+    const winDenom = wins.length + losses.length;
+    const winRatePct = winDenom > 0 ? Math.round((wins.length / winDenom) * 100) : 0;
     lines.push(
-      `Win rate: ${Math.round((wins.length / closed.length) * 100)}% (${wins.length}W / ${losses.length}L)`,
+      `Win rate: ${winRatePct}% (${wins.length}W / ${losses.length}L)`,
       `Avg PnL: ${avgPnl >= 0 ? "+" : ""}${avgPnl.toFixed(1)}%`,
       `Total fees simulated: $${totalFees.toFixed(2)}`
     );

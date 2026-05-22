@@ -83,10 +83,16 @@ export const config = {
     maxBundlePct:      u.maxBundlePct      ?? 30,  // max bundle holding % (OKX advanced-info)
     maxBotHoldersPct:  u.maxBotHoldersPct  ?? 30,  // max bot holder addresses % (Jupiter audit)
     maxTop10Pct:       u.maxTop10Pct       ?? 60,  // max top 10 holders concentration
+    maxPhishingPct:    u.maxPhishingPct    ?? 30,  // max phishing holders % (GMGN)
+    maxInsidersPct:    u.maxInsidersPct    ?? 10,  // max insider holders %
+    minBluechipPct:    u.minBluechipPct    ?? 0.5, // min bluechip holders % (below = suspicious)
+    maxFreshWalletsPct: u.maxFreshWalletsPct ?? 40, // max fresh+bundled wallets / holders ratio
+    maxBundlersPct:    u.maxBundlersPct    ?? 60,  // max bundler % (GMGN)
     allowedLaunchpads: u.allowedLaunchpads ?? [],  // allow-list launchpads, [] = no allow-list
     blockedLaunchpads:  u.blockedLaunchpads  ?? [],  // e.g. ["letsbonk.fun", "pump.fun"]
     minTokenAgeHours:   u.minTokenAgeHours   ?? null, // null = no minimum
     maxTokenAgeHours:   u.maxTokenAgeHours   ?? null, // null = no maximum
+    maxVolatility:      u.maxVolatility      ?? 15,   // max volatility score (15 = very tolerant, evolveThresholds will tighten)
     athFilterPct:       u.athFilterPct       ?? null, // e.g. -20 = only deploy if price is >= 20% below ATH
   },
 
@@ -259,6 +265,7 @@ export function reloadScreeningThresholds() {
     if (fresh.minVolume      != null) s.minVolume      = fresh.minVolume;
     if (fresh.minBinStep     != null) s.minBinStep     = fresh.minBinStep;
     if (fresh.maxBinStep     != null) s.maxBinStep     = fresh.maxBinStep;
+    if (fresh.maxVolatility  != null) s.maxVolatility  = fresh.maxVolatility;
     if (fresh.timeframe         != null) s.timeframe         = fresh.timeframe;
     if (fresh.category          != null) s.category          = fresh.category;
     if (fresh.minTokenAgeHours  !== undefined) s.minTokenAgeHours = fresh.minTokenAgeHours;

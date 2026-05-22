@@ -254,6 +254,15 @@ export async function getTokenHolders({ mint, limit = 20 }) {
   // Fallback: use OKX total_fee_sol if datapi fails
   const globalFeesSol = feesFromDatapi ?? advancedData?.total_fee_sol ?? null;
 
+  // ─── Deep Holder Analysis — aggregate signals ──────────────────
+  const hasInsiderSignals = (advancedData?.sniper_pct ?? 0) > 10 ||
+    (advancedData?.suspicious_pct ?? 0) > 20 ||
+    (advancedData?.bundle_pct ?? 0) > 15;
+  const hasHighFreshWallets = (advancedData?.new_wallet_pct ?? 0) > 30;
+  const hasSmartMoneyBuyers = advancedData?.smart_money_buy === true;
+  const hasDevRugHistory = (advancedData?.dev_rug_count ?? 0) > 0;
+  const hasKOLClusters = clusterList?.some((c) => c.has_kol) || false;
+
   return {
     mint,
     global_fees_sol: globalFeesSol,
@@ -266,6 +275,19 @@ export async function getTokenHolders({ mint, limit = 20 }) {
     sniper_pct:     advancedData?.sniper_pct     ?? null,
     suspicious_pct: advancedData?.suspicious_pct ?? null,
     new_wallet_pct: advancedData?.new_wallet_pct ?? null,  // high = rug signal
+    dev_rug_count:  advancedData?.dev_rug_count  ?? null,
+    dev_token_count: advancedData?.dev_token_count ?? null,
+    smart_money_buy: advancedData?.smart_money_buy ?? false,
+    // Deep holder analysis summary
+    holder_deep_analysis: {
+      has_insider_signals:     hasInsiderSignals,
+      has_high_fresh_wallets:  hasHighFreshWallets,
+      has_smart_money_buyers:  hasSmartMoneyBuyers,
+      has_dev_rug_history:     hasDevRugHistory,
+      has_kol_clusters:        hasKOLClusters,
+      kol_in_clusters:         clusterList?.some((c) => c.has_kol) || false,
+      top_cluster_trend:       clusterList?.[0]?.trend ?? null,
+    },
     smart_wallets_holding: smartWalletsHolding,
     holders: mapped,
   };

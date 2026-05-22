@@ -28,7 +28,7 @@ import { generateBriefing } from "./briefing.js";
 import { getLastBriefingDate, setLastBriefingDate, getTrackedPosition, getTrackedPositions, setPositionInstruction, updatePnlAndCheckExits, queuePeakConfirmation, resolvePendingPeak, queueTrailingDropConfirmation, resolvePendingTrailingDrop } from "./state.js";
 import { getActiveStrategy } from "./strategy-library.js";
 import { recordPositionSnapshot, recallForPool, addPoolNote } from "./pool-memory.js";
-import { checkSmartWalletsOnPool, listSmartWallets, initSmartWalletsFile } from "./smart-wallets.js";
+import { checkSmartWalletsOnPool, listSmartWallets, initSmartWalletsFile, getWalletConfidence } from "./smart-wallets.js";
 import { evolveSmartWallets } from "./wallet-evolution.js";
 import { registerVirtualPosition, evaluateVirtualPositions, getVirtualSummary } from "./dry-run-simulator.js";
 import { getCausalAnalysisSummary } from "./causal-analysis.js";
@@ -358,7 +358,7 @@ RULES:
 
 Execute the required actions. Do NOT re-evaluate CLOSE/CLAIM — rules already applied. Just execute.
 After executing, write a brief one-line result per position.
-      `, config.llm.maxSteps, [], "MANAGER", config.llm.managementModel, 2048, {
+      `, config.llm.maxSteps, [], "MANAGER", config.llm.managementModel, null, {
         onToolStart: async ({ name }) => { await liveMessage?.toolStart(name); },
         onToolFinish: async ({ name, result, success }) => { await liveMessage?.toolFinish(name, result, success); },
       });
@@ -410,14 +410,17 @@ export async function runScreeningCycle({ silent = false } = {}) {
   let screenReport = null;
   try {
     [prePositions, preBalance] = await Promise.all([getMyPositions({ force: true }), getWalletBalances()]);
-    if (prePositions.total_positions >= config.risk.maxPositions) {
-      log("cron", `Screening skipped — max positions reached (${prePositions.total_positions}/${config.risk.maxPositions})`);
-      screenReport = `Screening skipped — max positions reached (${prePositions.total_positions}/${config.risk.maxPositions}).`;
+    // Check both on-chain AND virtual positions (dry run mode on-chain is always 0)
+    const trackedOpenPre = getTrackedPositions(true);
+    const effectivePositionCount = Math.max(prePositions.total_positions, trackedOpenPre.length);
+    if (effectivePositionCount >= config.risk.maxPositions) {
+      log("cron", `Screening skipped — max positions reached (${effectivePositionCount}/${config.risk.maxPositions})`);
+      screenReport = `Screening skipped — max positions reached (${effectivePositionCount}/${config.risk.maxPositions}).`;
       appendDecision({
         type: "skip",
         actor: "SCREENER",
         summary: "Screening skipped",
-        reason: `Max positions reached (${prePositions.total_positions}/${config.risk.maxPositions})`,
+        reason: `Max positions reached (${effectivePositionCount}/${config.risk.maxPositions})`,
       });
       _screeningBusy = false;
       return screenReport;
@@ -459,19 +462,37 @@ export async function runScreeningCycle({ silent = false } = {}) {
       ? `ACTIVE STRATEGY: ${activeStrategy.name} — LP: ${activeStrategy.lp_strategy} | bins_above: ${activeStrategy.range?.bins_above ?? 0} (FIXED — never change) | deposit: ${activeStrategy.entry?.single_side === "sol" ? "SOL only (amount_y, amount_x=0)" : "dual-sided"} | best for: ${activeStrategy.best_for}`
       : `No active strategy — use default bid_ask, bins_above: 0, SOL only.`;
 
-    // Fetch top candidates, then recon each sequentially with a small delay to avoid 429s
-    const topCandidates = await getTopCandidates({ limit: 10 }).catch(() => null);
+    // Fetch top candidates with 60s timeout to prevent hanging screening
+    log("cron", "[DEBUG] Fetching top candidates...");
+    const topCandidates = await withTimeout(getTopCandidates({ limit: 10 }), 60_000);
+    log("cron", `[DEBUG] getTopCandidates done: ${topCandidates?.candidates?.length ?? 'null'} candidates`);
+    log("cron", `[DEBUG] topCandidates.pools: ${topCandidates?.pools?.length ?? 'null'}`);
+    log("cron", `[DEBUG] earlyFilteredExamples: ${topCandidates?.filtered_examples?.length ?? 0}`);
+    if (!topCandidates) {
+      screenReport = "Screening cancelled — getTopCandidates timed out (60s).";
+      log("cron", screenReport);
+      appendDecision({ type: "skip", actor: "SCREENER", summary: "Screening cancelled", reason: "getTopCandidates timed out" });
+      _screeningBusy = false;
+      return screenReport;
+    }
     const candidates = (topCandidates?.candidates || topCandidates?.pools || []).slice(0, 10);
     const earlyFilteredExamples = topCandidates?.filtered_examples || [];
 
     const allCandidates = [];
+    log("cron", `[DEBUG] Starting recon loop for ${candidates.length} candidates`);
     for (const pool of candidates) {
       const mint = pool.base?.mint;
-      const [smartWallets, narrative, tokenInfo] = await Promise.allSettled([
+      log("cron", `[DEBUG] Recon for ${pool.name}...`);
+      const reconResult = await withTimeout(Promise.allSettled([
         checkSmartWalletsOnPool({ pool_address: pool.pool }),
         mint ? getTokenNarrative({ mint }) : Promise.resolve(null),
         mint ? getTokenInfo({ query: mint }) : Promise.resolve(null),
-      ]);
+      ]), 30_000);
+      if (!reconResult) {
+        log("screening", `Candidate recon timed out for ${pool.name} — skipping`);
+        continue;
+      }
+      const [smartWallets, narrative, tokenInfo] = reconResult;
       allCandidates.push({
         pool,
         sw: smartWallets.status === "fulfilled" ? smartWallets.value : null,
@@ -479,7 +500,8 @@ export async function runScreeningCycle({ silent = false } = {}) {
         ti: tokenInfo.status === "fulfilled" ? tokenInfo.value?.results?.[0] : null,
         mem: recallForPool(pool.pool),
       });
-      await new Promise(r => setTimeout(r, 150)); // avoid 429s
+      log("cron", `[DEBUG] Recon done for ${pool.name}`);
+      await new Promise(r => setTimeout(r, 500)); // avoid RPC 429s — serialized recon needs breathing room
     }
 
     // Hard filters after token recon — block launchpads and excessive Jupiter bot holders
@@ -507,6 +529,7 @@ export async function runScreeningCycle({ silent = false } = {}) {
     });
 
     if (passing.length === 0) {
+      log("cron", `[DEBUG] passing.length === 0, returning no candidates`);
       const combined = filteredOut.length > 0 ? filteredOut : earlyFilteredExamples;
       const combinedExamples = combined.slice(0, 3)
         .map((entry) => `- ${entry.name}: ${entry.reason}`)
@@ -621,6 +644,7 @@ export async function runScreeningCycle({ silent = false } = {}) {
           mcap:                  pool.mcap                  ?? null,
           holder_count:          ti?.holders                ?? null,
           smart_wallets_present: (sw?.in_pool?.length ?? 0) > 0,
+          smart_wallet_confidence: sw?.avg_confidence ?? 0,
           narrative_quality:     n?.narrative ? "present" : "absent",
           volatility:            pool.volatility            ?? null,
         });
@@ -633,7 +657,9 @@ export async function runScreeningCycle({ silent = false } = {}) {
 
     let deployAttempted = false;
     let deploySucceeded = false;
-    const { content } = await agentLoop(`
+    log("cron", `[DEBUG] Calling agentLoop with ${passing.length} candidates, goal length ${candidateBlocks.join("\\n\\n").length} chars`);
+    const screeningController = new AbortController();
+    const agentResult = await withTimeout(agentLoop(`
 SCREENING CYCLE
 ${strategyBlock}
 Positions: ${prePositions.total_positions}/${config.risk.maxPositions} | SOL: ${currentBalance.sol.toFixed(3)} | Deploy: ${deployAmount} SOL
@@ -704,7 +730,8 @@ STEPS:
 IMPORTANT:
 - Never write "unknown" for OKX. Use real values, omit missing fields, or write exactly "OKX: unavailable".
 - Keep the whole report compact and highly scannable for Telegram.
-      `, config.llm.maxSteps, [], "SCREENER", config.llm.screeningModel, 2048, {
+      `, config.llm.maxSteps, [], "SCREENER", config.llm.screeningModel, null, {
+        signal: screeningController.signal,
         onToolStart: async ({ name }) => {
           if (name === "deploy_position") deployAttempted = true;
           await liveMessage?.toolStart(name);
@@ -716,7 +743,15 @@ IMPORTANT:
           }
           await liveMessage?.toolFinish(name, result, success);
         },
-      });
+      }), 600_000, screeningController);
+    if (!agentResult) {
+      screenReport = "⛔ Screening cancelled — agent loop timed out (600s).";
+      log("cron", screenReport);
+      appendDecision({ type: "skip", actor: "SCREENER", summary: "Screening cancelled", reason: "agent loop timed out" });
+      _screeningBusy = false;
+      return screenReport;
+    }
+    const content = agentResult?.content || agentResult || "";
     screenReport = content;
     if (/⛔\s*NO DEPLOY/i.test(content)) {
       appendDecision({
@@ -737,8 +772,9 @@ IMPORTANT:
     // ── Wallet Evolution — discover new smart wallets, prune bad ones ──
     // Run async in background so it never delays the screening report
     const topPoolAddresses = passing.slice(0, 3).map(({ pool }) => pool.pool).filter(Boolean);
+    const topPoolObjects = passing.slice(0, 3).map(({ pool }) => pool).filter(Boolean);
     if (topPoolAddresses.length) {
-      evolveSmartWallets(topPoolAddresses).then((evo) => {
+      evolveSmartWallets(topPoolAddresses, topPoolObjects).then((evo) => {
         if (evo.added.length)   log("wallet_evo", `Auto-added: ${evo.added.join(", ")}`);
         if (evo.removed.length) log("wallet_evo", `Auto-removed: ${evo.removed.join(", ")}`);
       }).catch((e) => log("wallet_evo", `Evolution error: ${e.message}`));
@@ -751,7 +787,7 @@ IMPORTANT:
         content.includes(pool.pool) && content.includes("DEPLOYED")
       );
       if (deployedPool) {
-        const virtualId = registerVirtualPosition(
+        const virtualId = await registerVirtualPosition(
           { dry_run: true, would_deploy: { pool_address: deployedPool.pool.pool } },
           deployedPool.pool,
           deployAmount
@@ -878,12 +914,15 @@ Summarize the current portfolio health, total fees earned, and performance of al
 // ═══════════════════════════════════════════
 let _shuttingDown = false;
 
-function withTimeout(promise, ms) {
+function withTimeout(promise, ms, controller = null) {
   let timer = null;
   return Promise.race([
     promise,
     new Promise((resolve) => {
-      timer = setTimeout(() => resolve(null), ms);
+      timer = setTimeout(() => {
+        controller?.abort(); // kill the underlying agentLoop so it doesn't zombie
+        resolve(null);
+      }, ms);
     }),
   ]).finally(() => {
     if (timer) clearTimeout(timer);
@@ -1306,11 +1345,37 @@ async function applySettingsMenuCallback(msg) {
   await showSettingsMenu({ messageId: msg.messageId, page });
 }
 
+function buildMainMenuKeyboard() {
+  return [
+    [
+      { text: "👛 Wallet", callback_data: "mnu:wallet" },
+      { text: "📊 Positions", callback_data: "mnu:positions" },
+      { text: "🧪 Sim", callback_data: "mnu:sim" },
+    ],
+    [
+      { text: "📋 Screen", callback_data: "mnu:screen" },
+      { text: "📝 Candidates", callback_data: "mnu:candidates" },
+      { text: "🎯 Deploy (last)", callback_data: "mnu:deploy" },
+    ],
+    [
+      { text: "⚙️ Settings", callback_data: "mnu:settings" },
+      { text: "📚 Help", callback_data: "mnu:help" },
+      { text: "🔍 Analysis", callback_data: "mnu:analysis" },
+    ],
+    [
+      { text: "⏸ Pause", callback_data: "mnu:pause" },
+      { text: "▶️ Resume", callback_data: "mnu:resume" },
+      { text: "❌ Close", callback_data: "mnu:close" },
+    ],
+  ];
+}
+
 function formatHelpText() {
   return [
     "Telegram commands",
     "",
     "/help — show commands",
+    "/menu — show inline command menu",
     "/status — wallet + positions snapshot",
     "/wallet — wallet, deploy amount, HiveMind status",
     "/positions — list open positions",
@@ -1443,7 +1508,44 @@ async function telegramHandler(msg) {
     }
     return;
   }
-  if (text === "/settings" || text === "/menu" || text === "/configmenu") {
+  if (msg?.isCallback && text.startsWith("mnu:")) {
+    await answerCallbackQuery(msg.callbackQueryId).catch(() => {});
+    const cmd = text.replace("mnu:", "");
+    if (cmd === "close") {
+      await editMessage("📋 Menu closed.", msg.messageId).catch(() => {});
+      return;
+    }
+    if (cmd === "help") {
+      await sendMessageWithButtons(formatHelpText(), buildMainMenuKeyboard()).catch(() => {});
+      return;
+    }
+    if (cmd === "settings") {
+      await showSettingsMenu().catch(() => {});
+      return;
+    }
+    if (cmd === "deploy") {
+      const latest = _latestCandidates;
+      if (latest.length === 0) {
+        await sendMessage("No cached candidates. Run /screen first.").catch(() => {});
+        return;
+      }
+      if (latest.length === 1) {
+        // Deploy the only one
+        const syntheticMsg = { text: "/deploy 1", chat: msg.chat, from: msg.from };
+        await telegramHandler(syntheticMsg);
+        return;
+      }
+      // Multiple candidates — show them and tell user to /deploy <n>
+      const lines = latest.map((p, i) => `${i + 1}. ${p.name}`);
+      await sendMessage(`Multiple candidates available. Use /deploy 1-${latest.length}:\n\n${lines.join("\n")}`, buildMainMenuKeyboard()).catch(() => {});
+      return;
+    }
+    // For all other commands, synthesize a normal message
+    const syntheticMsg = { text: "/" + cmd, chat: msg.chat, from: msg.from };
+    await telegramHandler(syntheticMsg);
+    return;
+  }
+  if (text === "/settings" || text === "/configmenu") {
     await showSettingsMenu().catch((e) => sendMessage(`Settings error: ${e.message}`).catch(() => {}));
     return;
   }
@@ -1468,7 +1570,12 @@ async function telegramHandler(msg) {
   }
 
   if (text === "/help") {
-    await sendMessage(formatHelpText()).catch(() => {});
+    await sendMessageWithButtons(formatHelpText(), buildMainMenuKeyboard()).catch(() => {});
+    return;
+  }
+
+  if (text === "/menu") {
+    await sendMessageWithButtons("📋 **Meridian Bot Menu**\nTap a button below to execute a command.", buildMainMenuKeyboard()).catch(() => {});
     return;
   }
 
@@ -1626,16 +1733,28 @@ async function telegramHandler(msg) {
         return;
       }
       const lines = wallets.map((w, i) => {
-        const source = w.source === "auto" ? "🤖" : "👤";
-        const stats  = w.stats
-          ? ` | wr ${(w.stats.win_rate * 100).toFixed(0)}% | ${w.stats.total_positions_observed}pos | avg+${w.stats.avg_pnl_pct?.toFixed(1)}%`
-          : "";
-        return `${i + 1}. ${source} ${w.name} (${w.category})\n   ${w.address.slice(0, 8)}...${w.address.slice(-4)}${stats}`;
+        const sourceIcon = w.source === "auto" ? "🤖" : w.source === "twitter_kol" ? "🐦" : "👤";
+        const typeIcon = w.type === "holder" || w.type === "kol" ? "👁️" : "💰";
+        let stats;
+        if (w.type === "holder" || w.type === "kol") {
+          // Holder wallets — show cluster/kol data instead of LP stats
+          const trend = w.stats?.cluster_trend || "unknown";
+          const holding = w.stats?.holding_pct ? `${w.stats.holding_pct}%` : "N/A";
+          stats = ` | 👁️ holder | trend=${trend} | holding=${holding}`;
+        } else if (w.stats?.total_positions_observed) {
+          const wr = w.stats.win_rate != null ? `${(w.stats.win_rate * 100).toFixed(0)}%` : "?";
+          const pnl = w.stats.avg_pnl_pct != null ? `avg+${w.stats.avg_pnl_pct.toFixed(1)}%` : "";
+          stats = ` | ${typeIcon} ${wr} | ${w.stats.total_positions_observed}pos | ${pnl}`;
+        } else {
+          stats = "";
+        }
+        return `${i + 1}. ${sourceIcon} ${w.name} (${w.category})\n   ${w.address.slice(0, 8)}...${w.address.slice(-4)}${stats}`;
       });
       const autoCount   = wallets.filter(w => w.source === "auto").length;
-      const manualCount = total - autoCount;
+      const twitterCount = wallets.filter(w => w.source === "twitter_kol").length;
+      const manualCount = total - autoCount - twitterCount;
       await sendMessage(
-        `👛 Smart Wallets (${total} total — 👤 ${manualCount} manual, 🤖 ${autoCount} auto)\n\n` +
+        `👛 Smart Wallets (${total} total — 🤖 ${autoCount} auto, 🐦 ${twitterCount} twitter, 👤 ${manualCount} manual)\n\n` +
         lines.join("\n\n")
       ).catch(() => {});
     } catch (e) {
@@ -1731,17 +1850,20 @@ async function telegramHandler(msg) {
   let liveMessage = null;
   try {
     log("telegram", `Incoming: ${text}`);
+    // Expand shorthand commands for readability
+    const CMD_ALIAS = { "/sum": "/summary", "/sim": "/simulation" };
+    const displayText = CMD_ALIAS[text.split(/\s/)[0]] ? text.replace(/^\S+/, (m) => CMD_ALIAS[m] || m) : text;
     const hasCloseIntent = /\bclose\b|\bsell\b|\bexit\b|\bwithdraw\b/i.test(text);
     const isDeployRequest = !hasCloseIntent && /\bdeploy\b|\bopen position\b|\blp into\b|\badd liquidity\b/i.test(text);
     const agentRole = isDeployRequest ? "SCREENER" : "GENERAL";
     const agentModel = agentRole === "SCREENER" ? config.llm.screeningModel : config.llm.generalModel;
-    liveMessage = await createLiveMessage("🤖 Live Update", `Request: ${text.slice(0, 240)}`);
-    const { content } = await agentLoop(text, config.llm.maxSteps, sessionHistory, agentRole, agentModel, null, {
+    liveMessage = await createLiveMessage("🤖 Live Update", `Request: ${displayText.slice(0, 240)}`);
+    const { content } = await agentLoop(displayText, config.llm.maxSteps, sessionHistory, agentRole, agentModel, null, {
       interactive: true,
       onToolStart: async ({ name }) => { await liveMessage?.toolStart(name); },
       onToolFinish: async ({ name, result, success }) => { await liveMessage?.toolFinish(name, result, success); },
     });
-    appendHistory(text, content);
+    appendHistory(displayText, content);
     if (liveMessage) await liveMessage.finalize(stripThink(content));
     else await sendMessage(stripThink(content));
   } catch (e) {

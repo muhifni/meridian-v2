@@ -512,6 +512,29 @@ If no smart wallets are present, rely on fundamentals (fees, volume, organic sco
   {
     type: "function",
     function: {
+      name: "discover_wallets_from_twitter",
+      description: `Scan recent tweets from known KOL (Evil Panda strategy) accounts for Solana pool addresses, then discover smart wallet holders from those pools.
+Use this to find early alpha wallets that KOLs are talking about before they become well-known LPers.
+Returns discovered KOL cluster wallets that can be added as "holder" type smart wallets.`,
+      parameters: {
+        type: "object",
+        properties: {
+          kol_handles: {
+            type: "string",
+            description: "Comma-separated Twitter handles to scan (without @). Default: EvilPanda,arip13741167,4thinfected"
+          },
+          tweets_per_kol: {
+            type: "number",
+            description: "Number of recent tweets to fetch per KOL (default: 10)"
+          }
+        }
+      }
+    }
+  },
+
+  {
+    type: "function",
+    function: {
       name: "get_token_info",
       description: `Get token data from Jupiter (organic score, holders, audit, price stats, mcap).
 Use this to research a token before deploying or when the user asks about a token.

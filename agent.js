@@ -93,10 +93,69 @@ import { getDecisionSummary } from "./decision-log.js";
 
 // Supports OpenRouter (default) or any OpenAI-compatible local server (e.g. LM Studio)
 // To use LM Studio: set LLM_BASE_URL=http://localhost:1234/v1 and LLM_API_KEY=lm-studio in .env
+// Raw response capture for reasoning_content recovery.
+// 9router strips reasoning_content when it sees SDK headers (accept: application/json,
+// x-stainless-*). We strip those headers so reasoning_content is preserved, then recover
+// it from the raw response after the SDK parses (the SDK itself discards unknown fields).
+let _lastRawJson = null;
+
 const client = new OpenAI({
   baseURL: process.env.LLM_BASE_URL || "https://openrouter.ai/api/v1",
   apiKey: process.env.LLM_API_KEY || process.env.OPENROUTER_API_KEY,
   timeout: 5 * 60 * 1000,
+  maxRetries: 0, // Disable SDK internal retries — we handle 429/5xx ourselves
+  fetch: async (url, init) => {
+    // Strip headers that cause 9router to hide reasoning_content
+    if (init.headers) {
+      const filtered = {};
+      for (const [k, v] of Object.entries(init.headers)) {
+        if (k === "authorization" || k === "content-type" || k === "content-length") {
+          filtered[k] = v;
+        }
+      }
+      init.headers = filtered;
+    }
+    const response = await globalThis.fetch(url, init);
+    const rawText = await response.text();
+    // Parse raw response — handle both clean JSON and SSE-wrapped format
+    let _needsClean = false;
+    try {
+      _lastRawJson = JSON.parse(rawText);
+    } catch (_) {
+      // 9router sometimes appends SSE suffix to JSON: "{...}data: [DONE]\n\n"
+      // Or wraps entirely: "data: {...}data: [DONE]\n\n"
+      _needsClean = true;
+      let cleaned = rawText;
+      if (cleaned.startsWith("data:")) {
+        cleaned = cleaned.replace(/^data:\s*/, "");
+      }
+      cleaned = cleaned.replace(/\s*data:\s*\[DONE\]\s*$/, "").trim();
+      try { _lastRawJson = JSON.parse(cleaned); } catch (_2) { _lastRawJson = null; }
+    }
+    // Return a fresh Response so the SDK can parse it cleanly
+    // If raw wasn't valid JSON but we extracted it, return the clean version
+    let responseBody = (_needsClean && _lastRawJson) ? JSON.stringify(_lastRawJson) : rawText;
+
+    // 🧹 Strip reasoning_content and promote to content for SDK compatibility
+    // Reasoning models (deepseek-v4-pro, etc.) return reasoning_content which
+    // OpenAI SDK doesn't recognize → parse failure → agent can't see tool calls.
+    // By merging reasoning_content into content and removing the unknown field,
+    // the SDK sees a standard response and parses it successfully.
+    if (_lastRawJson?.choices?.[0]?.message?.reasoning_content) {
+      const msg = _lastRawJson.choices[0].message;
+      if (!msg.content) {
+        msg.content = msg.reasoning_content;
+      }
+      delete msg.reasoning_content;
+      responseBody = JSON.stringify(_lastRawJson);
+    }
+
+    return new Response(responseBody, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers,
+    });
+  },
 });
 
 const DEFAULT_MODEL = process.env.LLM_MODEL || "openrouter/healer-alpha";
@@ -153,7 +212,7 @@ function isToolChoiceRequiredError(error) {
  * @returns {string} - The agent's final text response
  */
 export async function agentLoop(goal, maxSteps = config.llm.maxSteps, sessionHistory = [], agentType = "GENERAL", model = null, maxOutputTokens = null, options = {}) {
-  const { interactive = false, onToolStart = null, onToolFinish = null } = options;
+  const { interactive = false, onToolStart = null, onToolFinish = null, signal = null } = options;
   // Build dynamic system prompt with current portfolio state
   const [portfolio, positions] = await Promise.all([getWalletBalances(), getMyPositions()]);
   const stateSummary = getStateSummary();
@@ -185,13 +244,18 @@ export async function agentLoop(goal, maxSteps = config.llm.maxSteps, sessionHis
 
   let emptyStreak = 0;
   for (let step = 0; step < maxSteps; step++) {
+    // Check abort signal at the top of each step
+    if (signal?.aborted) {
+      log("agent", "Aborted by controller — exiting loop");
+      return { content: "Agent loop aborted (timeout or shutdown).", userMessage: goal };
+    }
     log("agent", `Step ${step + 1}/${maxSteps}`);
 
     try {
       const activeModel = model || DEFAULT_MODEL;
 
       // Retry up to 3 times on transient provider errors (502, 503, 529)
-      const FALLBACK_MODEL = "minimax-m2.7";
+      const FALLBACK_MODEL = "deepseek-flash-combo";
       let response;
       let usedModel = activeModel;
       // Force a tool call on step 0 for action intents — prevents the model from inventing deploy/close outcomes.
@@ -199,7 +263,7 @@ export async function agentLoop(goal, maxSteps = config.llm.maxSteps, sessionHis
       const ACTION_INTENTS = /\b(deploy|open|add liquidity|close|exit|withdraw|claim|swap|block|unblock)\b/i;
       let toolChoice = (step === 0 && agentType !== "SCREENER" && (ACTION_INTENTS.test(goal) || mustUseRealTool)) ? "required" : "auto";
 
-      for (let attempt = 0; attempt < 3; attempt++) {
+      for (let attempt = 0; attempt < 4; attempt++) {
         try {
           response = await client.chat.completions.create({
             model: usedModel,
@@ -223,17 +287,28 @@ export async function agentLoop(goal, maxSteps = config.llm.maxSteps, sessionHis
             attempt -= 1;
             continue;
           }
+          // Handle 429 rate limit with exponential backoff
+          if (error.status === 429 || error?.error?.code === 429) {
+            const backoff = Math.min(30000, (attempt + 1) * 10000); // 10s, 20s, 30s
+            log("agent", `Rate limited (429), backing off ${backoff / 1000}s (attempt ${attempt + 1}/4)`);
+            await new Promise((r) => setTimeout(r, backoff));
+            continue;
+          }
           throw error;
         }
         if (response.choices?.length) break;
-        const errCode = response.error?.code;
-        if (errCode === 502 || errCode === 503 || errCode === 529) {
+        const errCode = response.error?.code || response.error?.status;
+        if (errCode === 429) {
+          const backoff = Math.min(30000, (attempt + 1) * 10000);
+          log("agent", `Rate limited (429 in response), backing off ${backoff / 1000}s (attempt ${attempt + 1}/4)`);
+          await new Promise((r) => setTimeout(r, backoff));
+        } else if (errCode === 502 || errCode === 503 || errCode === 529) {
           const wait = (attempt + 1) * 5000;
           if (attempt === 1 && usedModel !== FALLBACK_MODEL) {
             usedModel = FALLBACK_MODEL;
             log("agent", `Switching to fallback model ${FALLBACK_MODEL}`);
           } else {
-            log("agent", `Provider error ${errCode}, retrying in ${wait / 1000}s (attempt ${attempt + 1}/3)`);
+            log("agent", `Provider error ${errCode}, retrying in ${wait / 1000}s (attempt ${attempt + 1}/4)`);
             await new Promise((r) => setTimeout(r, wait));
           }
         } else {
@@ -242,8 +317,24 @@ export async function agentLoop(goal, maxSteps = config.llm.maxSteps, sessionHis
       }
 
       if (!response.choices?.length) {
-        log("error", `Bad API response: ${JSON.stringify(response).slice(0, 200)}`);
-        throw new Error(`API returned no choices: ${response.error?.message || JSON.stringify(response)}`);
+        // SDK failed to parse but we have valid raw response — use it directly
+        if (_lastRawJson?.choices?.length) {
+          log("agent", `SDK parse failed but raw response has ${_lastRawJson.choices.length} choice(s) — using raw`);
+          response = _lastRawJson;
+        } else {
+          log("error", `Bad API response: ${JSON.stringify(response).slice(0, 200)}`);
+          throw new Error(`API returned no choices: ${response.error?.message || JSON.stringify(response)}`);
+        }
+      }
+      // OpenAI SDK strips reasoning_content (not in its schema). 9router also strips
+      // it when it detects SDK headers. We stripped SDK headers in our custom fetch so
+      // the raw response should contain it. Recover here before the message object is used.
+      if (_lastRawJson) {
+        const rawMsg = _lastRawJson?.choices?.[0]?.message;
+        if (rawMsg?.reasoning_content && !response.choices[0].message.reasoning_content) {
+          response.choices[0].message.reasoning_content = rawMsg.reasoning_content;
+        }
+        _lastRawJson = null;
       }
       const msg = response.choices[0].message;
 
@@ -290,14 +381,34 @@ export async function agentLoop(goal, maxSteps = config.llm.maxSteps, sessionHis
       }
       messages.push(msg);
 
+      // Some reasoning models consume all token budget on reasoning, leaving content
+      // empty. Promote reasoning_content to content so the agent has something to
+      // work with (the reasoning is usually high-quality analysis).
+      if (!msg.content && msg.reasoning_content) {
+        log("agent", `Content empty but reasoning present — promoting reasoning_content (${msg.reasoning_content.length} chars) to content`);
+        msg.content = msg.reasoning_content;
+      }
+
       // If the model didn't call any tools, it's done
       if (!msg.tool_calls || msg.tool_calls.length === 0) {
-        // Hermes sometimes returns null content — pop the empty message and retry once
+        // Hermes sometimes returns null content — pop the empty message and retry with backoff
         if (!msg.content) {
           messages.pop(); // remove the empty assistant message
-          log("agent", "Empty response, retrying...");
+          emptyStreak += 1;
+          if (emptyStreak >= 3) {
+            log("error", `Empty response streak (${emptyStreak}) — aborting to prevent infinite loop`);
+            return {
+              content: "The model returned empty responses repeatedly. This usually means the reasoning budget was exhausted. Try again later or switch to a different model.",
+              userMessage: goal,
+            };
+          }
+          // Back off progressively: 5s, 10s, 15s
+          const backoff = emptyStreak * 5000;
+          log("agent", `Empty response (streak ${emptyStreak}/3), retrying after ${backoff / 1000}s...`);
+          await new Promise((r) => setTimeout(r, backoff));
           continue;
         }
+        emptyStreak = 0; // reset on successful content
         if (mustUseRealTool && !sawToolCall) {
           noToolRetryCount += 1;
           messages.pop();

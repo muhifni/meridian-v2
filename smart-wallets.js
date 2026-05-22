@@ -76,49 +76,91 @@ export function listSmartWallets() {
 const _cache = new Map(); // address -> { positions, fetchedAt }
 const CACHE_TTL = 5 * 60 * 1000;
 
+/**
+ * Get a confidence score for a wallet based on data quantity.
+ * The more positions observed, the more we trust its stats.
+ * Helps avoid giving overweighted confidence to wallets with only 2-3 positions.
+ */
+export function getWalletConfidence(wallet) {
+  const stats = wallet.stats || {};
+  const positions = stats.total_positions_observed ?? 0;
+  const lastSeen = stats.last_seen ? new Date(stats.last_seen).getTime() : Date.now();
+  const daysSinceSeen = (Date.now() - lastSeen) / (24 * 60 * 60 * 1000);
+
+  // Base confidence from sample size
+  let confidence = 0.2; // minimum floor
+  if (positions >= 20) confidence = 1.0;
+  else if (positions >= 10) confidence = 0.9;
+  else if (positions >= 5) confidence = 0.75;
+  else if (positions >= 3) confidence = 0.5;
+
+  // Decay for stale data
+  if (daysSinceSeen > 14) confidence *= 0.7;
+  if (daysSinceSeen > 30) confidence *= 0.3;
+
+  return confidence;
+}
+
 export async function checkSmartWalletsOnPool({ pool_address }) {
   const { wallets: allWallets } = loadWallets();
-  // Only check LP-type wallets — holder wallets don't have positions
-  const wallets = allWallets.filter((w) => !w.type || w.type === "lp");
+  // Check ALL tracked wallets — both LP-type (have positions to check) and
+  // holder-type (monitored for early alpha, no positions expected in target pool)
+  // Also include "kol" and "insider" types
+  const wallets = allWallets.filter((w) => !w.type || w.type === "lp" || w.type === "holder" || w.type === "kol" || w.type === "insider");
   if (wallets.length === 0) {
     return {
       pool: pool_address,
       tracked_wallets: 0,
       in_pool: [],
       confidence_boost: false,
+      avg_confidence: 0,
       signal: "No smart wallets tracked yet — neutral signal",
     };
   }
 
   const { getWalletPositions } = await import("./tools/dlmm.js");
 
-  const results = await Promise.all(
-    wallets.map(async (wallet) => {
-      try {
-        const cached = _cache.get(wallet.address);
-        if (cached && Date.now() - cached.fetchedAt < CACHE_TTL) {
-          return { wallet, positions: cached.positions };
-        }
-        const { positions } = await getWalletPositions({ wallet_address: wallet.address });
-        _cache.set(wallet.address, { positions: positions || [], fetchedAt: Date.now() });
-        return { wallet, positions: positions || [] };
-      } catch {
-        return { wallet, positions: [] };
+  // Serialize wallet position fetches to avoid RPC 429 burst.
+  // Each getWalletPositions() calls getProgramAccounts (heavy RPC).
+  // Parallel = instant rate limit on Helius free tier.
+  const results = [];
+  for (const wallet of wallets) {
+    try {
+      const cached = _cache.get(wallet.address);
+      if (cached && Date.now() - cached.fetchedAt < CACHE_TTL) {
+        results.push({ wallet, positions: cached.positions });
+        continue;
       }
-    })
-  );
+      const { positions } = await getWalletPositions({ wallet_address: wallet.address });
+      _cache.set(wallet.address, { positions: positions || [], fetchedAt: Date.now() });
+      results.push({ wallet, positions: positions || [] });
+    } catch {
+      results.push({ wallet, positions: [] });
+    }
+  }
 
   const inPool = results
     .filter((r) => r.positions.some((p) => p.pool === pool_address))
-    .map((r) => ({ name: r.wallet.name, category: r.wallet.category, address: r.wallet.address }));
+    .map((r) => ({
+      name: r.wallet.name,
+      category: r.wallet.category,
+      type: r.wallet.type,
+      address: r.wallet.address,
+      confidence: getWalletConfidence(r.wallet),
+    }));
+
+  const avgConfidence = wallets.length > 0
+    ? wallets.reduce((s, w) => s + getWalletConfidence(w), 0) / wallets.length
+    : 0;
 
   return {
     pool: pool_address,
     tracked_wallets: wallets.length,
     in_pool: inPool,
     confidence_boost: inPool.length > 0,
+    avg_confidence: parseFloat(avgConfidence.toFixed(2)),
     signal: inPool.length > 0
-      ? `${inPool.length}/${wallets.length} smart wallet(s) are in this pool: ${inPool.map((w) => w.name).join(", ")} — STRONG signal`
+      ? `${inPool.length}/${wallets.length} smart wallet(s) are in this pool: ${inPool.map((w) => `${w.name} (conf:${w.confidence.toFixed(2)})`).join(", ")} — STRONG signal`
       : `0/${wallets.length} smart wallets in this pool — neutral, rely on fundamentals`,
   };
 }

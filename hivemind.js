@@ -226,6 +226,10 @@ export async function pullHiveMindPresets() {
 
 export async function bootstrapHiveMind() {
   if (!isHiveMindEnabled()) return null;
+  if (getPullMode() === "manual") {
+    log("hivemind", "HiveMind disabled (manual mode) — skipping registration & background sync");
+    return { enabled: false, reason: "manual mode" };
+  }
   ensureAgentId();
   const tasks = [registerHiveMindAgent({ reason: "startup" })];
   if (getPullMode() === "auto") {
@@ -237,6 +241,7 @@ export async function bootstrapHiveMind() {
 
 export function startHiveMindBackgroundSync() {
   if (!isHiveMindEnabled() || _heartbeatTimer) return null;
+  if (getPullMode() === "manual") return null;
   _heartbeatTimer = setInterval(() => {
     const tasks = [registerHiveMindAgent({ reason: "heartbeat" })];
     if (getPullMode() === "auto") {

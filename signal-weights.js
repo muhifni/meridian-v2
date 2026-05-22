@@ -23,6 +23,7 @@ const SIGNAL_NAMES = [
   "mcap",
   "holder_count",
   "smart_wallets_present",
+  "smart_wallet_confidence",
   "narrative_quality",
   "study_win_rate",
   "hive_consensus",
@@ -39,6 +40,7 @@ const HIGHER_IS_BETTER = new Set([
   "holder_count",
   "study_win_rate",
   "hive_consensus",
+  "smart_wallet_confidence",
 ]);
 
 // Boolean signals — compared by win rate when present vs absent

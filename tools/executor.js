@@ -12,13 +12,14 @@ import {
 import { getWalletBalances, swapToken } from "./wallet.js";
 import { studyTopLPers } from "./study.js";
 import { addLesson, clearAllLessons, clearPerformance, removeLessonsByKeyword, getPerformanceHistory, pinLesson, unpinLesson, listLessons } from "../lessons.js";
-import { setPositionInstruction } from "../state.js";
+import { setPositionInstruction, getTrackedPositions } from "../state.js";
 
 import { getPoolMemory, addPoolNote } from "../pool-memory.js";
 import { addStrategy, listStrategies, getStrategy, setActiveStrategy, removeStrategy } from "../strategy-library.js";
 import { addToBlacklist, removeFromBlacklist, listBlacklist } from "../token-blacklist.js";
 import { blockDev, unblockDev, listBlockedDevs } from "../dev-blocklist.js";
 import { addSmartWallet, removeSmartWallet, listSmartWallets, checkSmartWalletsOnPool } from "../smart-wallets.js";
+import { discoverWalletsFromKolTweets } from "../twitter-wallet.js";
 import { getTokenInfo, getTokenHolders, getTokenNarrative } from "./token.js";
 import { config, reloadScreeningThresholds, MIN_SAFE_BINS_BELOW } from "../config.js";
 import { getRecentDecisions } from "../decision-log.js";
@@ -252,6 +253,7 @@ const toolMap = {
   remove_smart_wallet: removeSmartWallet,
   list_smart_wallets: listSmartWallets,
   check_smart_wallets_on_pool: checkSmartWalletsOnPool,
+  discover_wallets_from_twitter: discoverWalletsFromKolTweets,
   claim_fees: claimFees,
   close_position: closePosition,
   get_wallet_balance: getWalletBalances,
@@ -361,6 +363,7 @@ const toolMap = {
       minTokenAgeHours: ["screening", "minTokenAgeHours"],
       maxTokenAgeHours: ["screening", "maxTokenAgeHours"],
       athFilterPct:     ["screening", "athFilterPct"],
+      maxVolatility:    ["screening", "maxVolatility"],
       minFeePerTvl24h: ["management", "minFeePerTvl24h"],
       // management
       minClaimAmount: ["management", "minClaimAmount"],
@@ -750,16 +753,23 @@ async function runSafetyChecks(name, args) {
       }
 
       // Check position count limit + duplicate pool guard — force fresh scan to avoid stale cache
+      // In dry run mode, also count virtual positions from state.json (on-chain is always 0)
       const positions = await getMyPositions({ force: true });
-      if (positions.total_positions >= config.risk.maxPositions) {
+      const trackedOpen = getTrackedPositions(true);
+      const effectiveCount = Math.max(positions.total_positions, trackedOpen.length);
+      if (effectiveCount >= config.risk.maxPositions) {
         return {
           pass: false,
-          reason: `Max positions (${config.risk.maxPositions}) reached. Close a position first.`,
+          reason: `Max positions (${config.risk.maxPositions}) reached (${effectiveCount} open). Close a position first.`,
         };
       }
-      const alreadyInPool = positions.positions.some(
+      const allOpenPositions = positions.positions || [];
+      // Merge tracked virtual positions for duplicate checks
+      const trackedPools = trackedOpen.map(p => p.pool || p.pool_address);
+      const trackedMints = trackedOpen.map(p => p.base_mint).filter(Boolean);
+      const alreadyInPool = allOpenPositions.some(
         (p) => p.pool === args.pool_address
-      );
+      ) || trackedPools.includes(args.pool_address);
       if (alreadyInPool) {
         return {
           pass: false,
@@ -769,9 +779,9 @@ async function runSafetyChecks(name, args) {
 
       // Block same base token across different pools
       if (args.base_mint) {
-        const alreadyHasMint = positions.positions.some(
+        const alreadyHasMint = allOpenPositions.some(
           (p) => p.base_mint === args.base_mint
-        );
+        ) || trackedMints.includes(args.base_mint);
         if (alreadyHasMint) {
           return {
             pass: false,
