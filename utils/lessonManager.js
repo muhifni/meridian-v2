@@ -92,7 +92,8 @@ export function applyPerformanceFeedback(perf, recentLessons = []) {
     perf.close_reason,
   ].filter(Boolean).map(t => String(t).toLowerCase()));
 
-  for (const lesson of data.lessons) {
+  for (let i = 0; i < data.lessons.length; i++) {
+    const lesson = data.lessons[i];
     const l = ensureScoringFields(lesson);
     const lessonTags = new Set((l.tags || []).map(t => String(t).toLowerCase()));
     const ruleLower = (l.rule || "").toLowerCase();
@@ -115,6 +116,7 @@ export function applyPerformanceFeedback(perf, recentLessons = []) {
 
     l.usageCount = (l.usageCount || 0) + 1;
     l.lastUsed = new Date().toISOString();
+    data.lessons[i] = l; // ← write back mutated copy to array
     updated++;
   }
 
