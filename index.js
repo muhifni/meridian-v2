@@ -233,10 +233,19 @@ export async function runManagementCycle({ silent = false } = {}) {
     const livePositions = await getMyPositions({ force: true }).catch(() => null);
     positions = livePositions?.positions || [];
 
-    if (positions.length === 0) {
+    // In dry run mode, check virtual positions too — on-chain is always 0
+    const isDryRun = process.env.DRY_RUN === "true";
+    const trackedOpen = isDryRun ? getTrackedPositions(true) : [];
+    const effectiveOpen = Math.max(positions.length, trackedOpen.length);
+
+    if (effectiveOpen === 0) {
       log("cron", "No open positions — triggering screening cycle");
       mgmtReport = "No open positions. Triggering screening cycle.";
       runScreeningCycle().catch((e) => log("cron_error", `Triggered screening failed: ${e.message}`));
+      return mgmtReport;
+    } else if (positions.length === 0 && trackedOpen.length > 0) {
+      log("cron", `No on-chain positions, but ${trackedOpen.length} virtual position(s) open — evaluating via simulator`);
+      mgmtReport = `${trackedOpen.length} virtual position(s) open. Simulator evaluating exit rules.`;
       return mgmtReport;
     }
 

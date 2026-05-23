@@ -136,7 +136,7 @@ export async function recordPerformance(perf) {
 
   // Apply scoring feedback to relevant existing lessons
   if (data.lessons.length > 0) {
-    applyPerformanceFeedback(entry, data.lessons.slice(-8));
+    applyPerformanceFeedback(entry, data.lessons.slice(-20));
   }
 
   // Auto-prune every 8 closes
@@ -599,8 +599,10 @@ export function clearPerformance() {
 
 // Tags that map to each agent role — used for role-aware lesson injection
 const ROLE_TAGS = {
-  SCREENER: ["screening", "narrative", "strategy", "deployment", "token", "volume", "entry", "bundler", "holders", "organic"],
-  MANAGER:  ["management", "risk", "oor", "fees", "position", "hold", "close", "pnl", "rebalance", "claim"],
+  SCREENER: ["screening", "narrative", "strategy", "deployment", "token", "volume", "entry", "bundler", "holders", "organic",
+             "oor", "bid_ask", "worked", "efficient", "volume_collapse", "failed", "config_optimizer", "dry_run", "self_tune"],
+  MANAGER:  ["management", "risk", "oor", "fees", "position", "hold", "close", "pnl", "rebalance", "claim",
+             "worked", "failed", "efficient", "volume_collapse"],
   GENERAL:  [], // all lessons
 };
 
