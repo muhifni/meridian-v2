@@ -130,6 +130,7 @@ export async function registerVirtualPosition(deployResult, poolCandidate, deplo
       organic_score: poolCandidate?.organic_score,
       volatility: poolCandidate?.volatility,
       smart_wallets: poolCandidate?.smart_wallets_count ?? 0,
+      smart_wallet_addresses: poolCandidate?._sw_at_deploy || [],
       narrative: poolCandidate?.has_narrative ?? false,
     },
   };
@@ -374,6 +375,21 @@ async function _closeVirtualPosition(pos, evaluation) {
   saveVirtualLog(vlog);
 
   log("simulator", `Virtual close: ${pos.pool_name} | ${evaluation.reason} | PnL: ${evaluation.pnl_pct}%`);
+
+  // ── Smart wallet feedback loop ─────────────────────────────────
+  const swAddresses = pos.signal_snapshot?.smart_wallet_addresses || [];
+  if (swAddresses.length) {
+    try {
+      const { feedbackToWallets } = await import("./wallet-evolution.js");
+      feedbackToWallets(swAddresses, {
+        pnl_pct: evaluation.pnl_pct,
+        close_reason: evaluation.reason,
+        pool_name: pos.pool_name,
+      });
+    } catch (e) {
+      log("simulator_warn", `Wallet feedback error: ${e.message}`);
+    }
+  }
 
   // ── Feed into full learning pipeline ──────────────────────────
   await recordPerformance({

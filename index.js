@@ -797,6 +797,11 @@ IMPORTANT:
         content.includes(pool.pool) && content.includes("DEPLOYED")
       );
       if (deployedPool) {
+        // Enrich pool candidate with smart wallet addresses for feedback loop
+        const swAddresses = (deployedPool.sw?.in_pool || []).map(w => w.address).filter(Boolean);
+        if (swAddresses.length) {
+          deployedPool.pool._sw_at_deploy = swAddresses;
+        }
         const virtualId = await registerVirtualPosition(
           { dry_run: true, would_deploy: { pool_address: deployedPool.pool.pool } },
           deployedPool.pool,

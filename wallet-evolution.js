@@ -356,3 +356,63 @@ function _updateWalletStats(address, newData) {
 function _lerp(a, b, t) {
   return Number(((1 - t) * (a ?? b) + t * b).toFixed(4));
 }
+
+/**
+ * Feedback loop: update smart wallet stats based on position outcome.
+ * Called when a virtual (or live) position closes — adjusts win_rate and avg_pnl
+ * for wallets that were present in the pool at deploy time.
+ *
+ * @param {string[]} walletAddresses - Wallet addresses that were in the pool at deploy
+ * @param {object} outcome - { pnl_pct, close_reason, pool_name }
+ */
+export function feedbackToWallets(walletAddresses, outcome) {
+  if (!walletAddresses?.length) return;
+  if (!fs.existsSync(WALLETS_PATH)) return;
+
+  try {
+    const data = JSON.parse(fs.readFileSync(WALLETS_PATH, "utf8"));
+    let updated = 0;
+
+    for (const addr of walletAddresses) {
+      const wallet = data.wallets.find((w) => w.address === addr && w.source === "auto");
+      if (!wallet) continue;
+
+      const stats = wallet.stats || {};
+      const prevPositions = stats.total_positions_observed ?? 0;
+      const newPositions = prevPositions + 1;
+
+      // Update win_rate with new outcome
+      const isWin = (outcome.pnl_pct ?? 0) >= 1; // same threshold as /sim
+      const prevWins = Math.round((stats.win_rate ?? 0.7) * prevPositions);
+      const newWins = prevWins + (isWin ? 1 : 0);
+      const newWinRate = newPositions > 0 ? newWins / newPositions : stats.win_rate ?? 0.7;
+
+      // Update avg_pnl with rolling average
+      const prevAvgPnl = stats.avg_pnl_pct ?? 0;
+      const newAvgPnl = prevPositions > 0
+        ? (prevAvgPnl * prevPositions + (outcome.pnl_pct ?? 0)) / newPositions
+        : outcome.pnl_pct ?? 0;
+
+      stats.win_rate = Number(newWinRate.toFixed(4));
+      stats.avg_pnl_pct = Number(newAvgPnl.toFixed(2));
+      stats.total_positions_observed = newPositions;
+      stats.effective_win_rate = newPositions >= 5
+        ? stats.win_rate
+        : stats.win_rate * 0.85;
+      stats.last_feedback = new Date().toISOString();
+      stats.last_feedback_pnl = outcome.pnl_pct;
+      stats.last_feedback_pool = outcome.pool_name || null;
+
+      wallet.stats = stats;
+      updated++;
+
+      log("wallet_evo", `Feedback: ${wallet.name} — pnl=${outcome.pnl_pct?.toFixed(1)}%, new win_rate=${(stats.win_rate * 100).toFixed(0)}%, positions=${newPositions}`);
+    }
+
+    if (updated > 0) {
+      fs.writeFileSync(WALLETS_PATH, JSON.stringify(data, null, 2));
+    }
+  } catch (e) {
+    log("wallet_evo", `Feedback error: ${e.message}`);
+  }
+}
