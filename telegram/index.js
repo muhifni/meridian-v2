@@ -13,6 +13,7 @@ import reporting from "./commands/reporting.js";
 import smartWallets from "./commands/smart-wallets.js";
 import hive from "./commands/hive.js";
 import control, { bindCronControls } from "./commands/control.js";
+import menu from "./commands/menu.js";
 
 // ─── Middleware stack (order matters) ────────────────────────────
 bot.use(ownerOnly);
@@ -28,6 +29,7 @@ bot.use(reporting);
 bot.use(smartWallets);
 bot.use(hive);
 bot.use(control);
+bot.use(menu);
 
 // ─── Launch ──────────────────────────────────────────────────────
 export async function startBot() {
