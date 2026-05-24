@@ -34,7 +34,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { log } from "./logger.js";
 import { addSmartWallet, removeSmartWallet, listSmartWallets, getWalletConfidence } from "./smart-wallets.js";
-import { studyTopLPers } from "./tools/study.js";
+import { getTopLPers, getApiKey as getLpAgentKey } from "./tools/lpagent.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WALLETS_PATH = path.join(__dirname, "smart-wallets.json");
@@ -86,35 +86,51 @@ export async function evolveSmartWallets(poolAddresses = [], candidatePools = []
 }
 
 /**
- * Discover LP wallets from LPAgent study data.
+ * Discover LP wallets from LPAgent Open API (top-lpers endpoint).
+ * Requires Premium plan ($20/month) for /pools/{poolId}/top-lpers.
  */
 async function discoverLpWallets(poolAddresses) {
   const result = { added: [], skipped: 0 };
-  const discovered = new Map(); // address → best summary seen across pools
+
+  if (!getLpAgentKey()) {
+    log("wallet_evo", "LPAGENT_API_KEY not set — LP wallet discovery skipped.");
+    return result;
+  }
+
+  const discovered = new Map(); // address → best stats seen across pools
 
   for (const poolAddr of poolAddresses.slice(0, 3)) {
     try {
-      const study = await studyTopLPers({ pool_address: poolAddr, limit: 6 });
-      for (const lper of study.lpers || []) {
-        const s = lper.summary;
-        if (!lper.owner) continue;
+      const { data } = await getTopLPers(poolAddr, { limit: 20, order_by: "win_rate", sort_order: "desc" });
+      for (const entry of data) {
+        if (!entry.owner) continue;
 
-        const existing = discovered.get(lper.owner);
+        const winRate = entry.win_rate ?? 0;
+        const totalLp = entry.total_lp ?? 0;
+        const pnlPct = entry.total_inflow > 0
+          ? ((entry.total_pnl ?? 0) / entry.total_inflow) * 100
+          : 0;
+
+        const existing = discovered.get(entry.owner);
         // Keep the entry with the most positions seen (most data)
-        if (!existing || s.total_positions > existing.total_positions) {
-          discovered.set(lper.owner, {
-            address: lper.owner,
-            win_rate: s.win_rate ?? 0,
-            total_positions: s.total_positions ?? 0,
-            avg_pnl_pct: s.avg_open_pnl_pct ?? 0,
-            preferred_strategy: s.preferred_strategy,
+        if (!existing || totalLp > existing.total_positions) {
+          discovered.set(entry.owner, {
+            address: entry.owner,
+            win_rate: winRate,
+            total_positions: totalLp,
+            avg_pnl_pct: pnlPct,
+            preferred_strategy: inferStrategyFromHours(entry.avg_age_hour),
             pool: poolAddr,
-            pool_name: study.pool_name,
+            pool_name: `${entry.token0_symbol || "TOKEN"}-${entry.token1_symbol || "SOL"}`,
+            roi: entry.roi ?? 0,
+            fee_percent: entry.fee_percent ?? 0,
+            avg_age_hour: entry.avg_age_hour ?? 0,
+            last_activity: entry.last_activity || null,
           });
         }
       }
     } catch (err) {
-      log("wallet_evo", `Study failed for ${poolAddr.slice(0, 8)}: ${err.message}`);
+      log("wallet_evo", `LPAgent top-lpers failed for ${poolAddr.slice(0, 8)}: ${err.message}`);
     }
   }
 
@@ -355,6 +371,16 @@ function _updateWalletStats(address, newData) {
 
 function _lerp(a, b, t) {
   return Number(((1 - t) * (a ?? b) + t * b).toFixed(4));
+}
+
+/**
+ * Infer preferred strategy from average hold hours.
+ */
+function inferStrategyFromHours(avgHours) {
+  if (avgHours == null) return "unknown";
+  if (avgHours < 1) return "BidAsk";
+  if (avgHours < 4) return "Spot";
+  return "Spot";
 }
 
 /**
