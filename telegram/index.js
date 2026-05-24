@@ -14,6 +14,7 @@ import smartWallets from "./commands/smart-wallets.js";
 import hive from "./commands/hive.js";
 import control, { bindCronControls } from "./commands/control.js";
 import menu from "./commands/menu.js";
+import agentFallback, { bindAgentFallback } from "./commands/agent-fallback.js";
 
 // ─── Middleware stack (order matters) ────────────────────────────
 bot.use(ownerOnly);
@@ -30,6 +31,9 @@ bot.use(smartWallets);
 bot.use(hive);
 bot.use(control);
 bot.use(menu);
+
+// Agent fallback MUST be last — catches all unhandled text messages
+bot.use(agentFallback);
 
 // ─── Launch ──────────────────────────────────────────────────────
 export async function startBot() {
@@ -48,4 +52,4 @@ export function stopBot() {
   bot.stop();
 }
 
-export { bot, bindCronControls };
+export { bot, bindCronControls, bindAgentFallback };
