@@ -43,7 +43,7 @@ export function bindAgentFallback({
 // Catch-all: any text message that wasn't handled by a command
 agentFallback.on("message:text", async (ctx) => {
   const text = ctx.message.text?.trim();
-  if (!text || text.startsWith("/")) return; // skip unhandled commands
+  if (!text) return;
 
   // Queue if busy
   if (_getBusy()) {
