@@ -466,7 +466,7 @@ async function _optimizeConfig(closedPositions) {
     const { computeDeployAmount } = await import("./config.js");
 
     const recent  = closedPositions.slice(-20);
-    const wins    = recent.filter(p => (p.final_pnl_pct ?? 0) > 0);
+    const wins    = recent.filter(p => (p.final_pnl_pct ?? 0) >= 1);
     const losses  = recent.filter(p => (p.final_pnl_pct ?? 0) < 0);
     const winDenom = wins.length + losses.length;
     const winRate = winDenom > 0 ? wins.length / winDenom : 0;
@@ -555,8 +555,9 @@ export function getVirtualSummary() {
     return "No virtual positions yet. Deploy in dry run mode to start simulating.";
   }
 
-  const wins   = closed.filter(p => (p.final_pnl_pct ?? 0) > 0);
-  const losses = closed.filter(p => (p.final_pnl_pct ?? 0) < 0);
+  const wins    = closed.filter(p => (p.final_pnl_pct ?? 0) >= 1);
+  const losses  = closed.filter(p => (p.final_pnl_pct ?? 0) < 0);
+  const neutral = closed.filter(p => (p.final_pnl_pct ?? 0) >= 0 && (p.final_pnl_pct ?? 0) < 1);
   const avgPnl = closed.length > 0
     ? closed.reduce((s, p) => s + (p.final_pnl_pct ?? 0), 0) / closed.length
     : 0;
@@ -572,7 +573,7 @@ export function getVirtualSummary() {
     const winDenom = wins.length + losses.length;
     const winRatePct = winDenom > 0 ? Math.round((wins.length / winDenom) * 100) : 0;
     lines.push(
-      `Win rate: ${winRatePct}% (${wins.length}W / ${losses.length}L)`,
+      `Win rate: ${winRatePct}% (${wins.length}W / ${losses.length}L${neutral.length > 0 ? ` / ${neutral.length} neutral` : ""})`,
       `Avg PnL: ${avgPnl >= 0 ? "+" : ""}${avgPnl.toFixed(1)}%`,
       `Total fees simulated: $${totalFees.toFixed(2)}`
     );
