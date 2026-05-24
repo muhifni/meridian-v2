@@ -809,6 +809,17 @@ IMPORTANT:
     screenReport = `Screening cycle failed: ${error.message}`;
   } finally {
     _screeningBusy = false;
+
+    // P1: Evaluate previously skipped pools (fire-and-forget, non-blocking)
+    import("./skipped-tracker.js")
+      .then(({ evaluateSkippedPools }) => evaluateSkippedPools())
+      .then((result) => {
+        if (result && result.missed > 0) {
+          log("skipped-tracker", `Follow-up: ${result.missed} missed opportunities from ${result.evaluated} evaluated`);
+        }
+      })
+      .catch((err) => log("skipped-tracker", `Evaluation error: ${err.message}`));
+
     if (!silent && telegramEnabled()) {
       if (screenReport) {
         if (liveMessage) await liveMessage.finalize(stripThink(screenReport)).catch(() => {});

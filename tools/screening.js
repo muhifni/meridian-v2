@@ -717,6 +717,14 @@ export async function getTopCandidates({ limit = 10 } = {}) {
     }
   }
 
+  // P1: Persist all skipped pools for follow-up evaluation
+  try {
+    const { recordSkippedPools } = await import("../skipped-tracker.js");
+    recordSkippedPools(filteredOut, pools.length);
+  } catch (err) {
+    log("skipped-tracker", `Failed to record skipped pools: ${err.message}`);
+  }
+
   return {
     candidates: eligible,
     total_screened: pools.length,
@@ -818,6 +826,16 @@ function pushFilteredReason(list, pool, reason) {
   if (!list || !pool) return;
   list.push({
     name: pool.name || `${pool.base?.symbol || "?"}-${pool.quote?.symbol || "?"}`,
+    pool_address: pool.pool || pool.pool_address || null,
     reason,
+    metrics: {
+      organic: pool.organic_score ?? pool.organic ?? null,
+      fee_tvl: pool.fee_active_tvl_ratio ?? null,
+      volatility: pool.volatility ?? null,
+      volume: pool.volume_window ?? pool.volume ?? null,
+      tvl: Number(pool.tvl ?? pool.active_tvl ?? 0) || null,
+      holders: pool.holders ?? null,
+      bin_step: pool.bin_step ?? null,
+    },
   });
 }
