@@ -24,6 +24,7 @@ import {
   isEnabled as telegramEnabled,
   createLiveMessage,
 } from "./telegram.js";
+import { startBot, stopBot, bindCronControls, bindAgentFallback } from "./telegram/index.js";
 import { generateBriefing } from "./briefing.js";
 import { getLastBriefingDate, setLastBriefingDate, getTrackedPosition, getTrackedPositions, setPositionInstruction, updatePnlAndCheckExits, queuePeakConfirmation, resolvePendingPeak, queueTrailingDropConfirmation, resolvePendingTrailingDrop } from "./state.js";
 import { getActiveStrategy } from "./strategy-library.js";
@@ -2050,7 +2051,27 @@ if (isMain && isTTY) {
   launchCron();
   maybeRunMissedBriefing().catch(() => { });
 
-  startPolling(telegramHandler);
+  // ─── Bind grammY hooks and start bot ───────────────────────────
+  bindCronControls({
+    stopCronJobs,
+    startCronJobs,
+    getCronStarted: () => cronStarted,
+    setCronStarted: (v) => { cronStarted = v; },
+    timers,
+  });
+  bindAgentFallback({
+    agentLoop,
+    sessionHistory,
+    getBusy: () => busy,
+    setBusy: (v) => { busy = v; },
+    config,
+    appendHistory,
+    stripThink,
+    refreshPrompt,
+    drainTelegramQueue,
+    telegramQueue: _telegramQueue,
+  });
+  startBot();
 
   console.log(`
 Commands:
@@ -2266,7 +2287,29 @@ Focus on: hold duration, entry/exit timing, what win rates look like, whether sc
   log("startup", "Non-TTY mode — starting cron cycles immediately.");
   startCronJobs();
   maybeRunMissedBriefing().catch(() => { });
-  startPolling(telegramHandler);
+
+  // ─── Bind grammY hooks and start bot ───────────────────────────
+  bindCronControls({
+    stopCronJobs,
+    startCronJobs,
+    getCronStarted: () => cronStarted,
+    setCronStarted: (v) => { cronStarted = v; },
+    timers,
+  });
+  bindAgentFallback({
+    agentLoop,
+    sessionHistory,
+    getBusy: () => busy,
+    setBusy: (v) => { busy = v; },
+    config,
+    appendHistory,
+    stripThink,
+    refreshPrompt: () => {},
+    drainTelegramQueue,
+    telegramQueue: _telegramQueue,
+  });
+  startBot();
+
   (async () => {
     try {
       await runScreeningCycle({ silent: false });
