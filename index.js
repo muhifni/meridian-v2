@@ -924,7 +924,37 @@ Summarize the current portfolio health, total fees earned, and performance of al
     }
   }, 30_000);
 
-  _cronTasks = [mgmtTask, screenTask, healthTask, briefingTask, briefingWatchdog];
+  // Wallet Evolution — independent cron, every 2 hours
+  // Runs even when positions are full (screening skipped)
+  let _walletEvoBusy = false;
+  const walletEvoTask = cron.schedule(`0 */2 * * *`, async () => {
+    if (_walletEvoBusy) return;
+    _walletEvoBusy = true;
+    try {
+      // Fetch top trending pools directly from Meteora (lightweight, no LLM, no screening filters)
+      const res = await fetch("https://pool-discovery-api.datapi.meteora.ag/pools?page_size=5&category=trending&timeframe=5m", {
+        signal: AbortSignal.timeout(15000),
+      }).catch(() => null);
+      if (!res?.ok) { _walletEvoBusy = false; return; }
+      const data = await res.json().catch(() => null);
+      const pools = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
+      if (!pools.length) { _walletEvoBusy = false; return; }
+      const poolAddresses = pools.slice(0, 3).map(p => p.pool || p.pool_address).filter(Boolean);
+      const poolObjects = pools.slice(0, 3);
+      if (poolAddresses.length) {
+        const evo = await evolveSmartWallets(poolAddresses, poolObjects);
+        if (evo.added.length)   log("wallet_evo", `Auto-added: ${evo.added.join(", ")}`);
+        if (evo.removed.length) log("wallet_evo", `Auto-removed: ${evo.removed.join(", ")}`);
+        if (!evo.added.length && !evo.removed.length) log("wallet_evo", `Evolution check — no changes (skipped: ${evo.skipped})`);
+      }
+    } catch (e) {
+      log("wallet_evo", `Scheduled evolution error: ${e.message}`);
+    } finally {
+      _walletEvoBusy = false;
+    }
+  });
+
+  _cronTasks = [mgmtTask, screenTask, healthTask, briefingTask, briefingWatchdog, walletEvoTask];
   // Store interval ref so stopCronJobs can clear it
   _cronTasks._pnlPollInterval = pnlPollInterval;
   log("cron", `Cycles started — management every ${config.schedule.managementIntervalMin}m, screening every ${config.schedule.screeningIntervalMin}m`);
