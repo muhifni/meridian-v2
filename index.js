@@ -839,13 +839,30 @@ IMPORTANT:
 export function startCronJobs() {
   stopCronJobs(); // stop any running tasks before (re)starting
 
-  const mgmtTask = cron.schedule(`*/${Math.max(1, config.schedule.managementIntervalMin)} * * * *`, async () => {
+  // Stagger offset: delay first cron fire to avoid LPAgent rate limit clash with other bot instances
+  const offsetSec = Math.max(0, Number(config.schedule.screeningOffsetSec) || 0);
+  if (offsetSec > 0) {
+    log("cron", `Stagger offset: ${offsetSec}s — cron patterns shifted`);
+  }
+
+  // Build cron pattern with offset (e.g., offset 300s = fire at :05, :15, :25... instead of :00, :10, :20...)
+  const offsetMin = Math.floor(offsetSec / 60);
+  const mgmtInterval = Math.max(1, config.schedule.managementIntervalMin);
+  const screenInterval = Math.max(1, config.schedule.screeningIntervalMin);
+  const mgmtCron = offsetMin > 0
+    ? `${offsetMin}-59/${mgmtInterval} * * * *`
+    : `*/${mgmtInterval} * * * *`;
+  const screenCron = offsetMin > 0
+    ? `${offsetMin}-59/${screenInterval} * * * *`
+    : `*/${screenInterval} * * * *`;
+
+  const mgmtTask = cron.schedule(mgmtCron, async () => {
     if (_managementBusy) return;
     timers.managementLastRun = Date.now();
     await runManagementCycle();
   });
 
-  const screenTask = cron.schedule(`*/${Math.max(1, config.schedule.screeningIntervalMin)} * * * *`, runScreeningCycle);
+  const screenTask = cron.schedule(screenCron, runScreeningCycle);
 
   const healthTask = cron.schedule(`0 * * * *`, async () => {
     if (_managementBusy) return;
@@ -929,10 +946,11 @@ Summarize the current portfolio health, total fees earned, and performance of al
     }
   }, 30_000);
 
-  // Wallet Evolution — independent cron, every 2 hours
-  // Runs even when positions are full (screening skipped)
+  // Wallet Evolution — independent cron, configurable schedule
+  // Default: "0 */2 * * *" (every 2h at :00). Bot live bisa set "30 1-23/2 * * *" (jam ganjil +30m)
   let _walletEvoBusy = false;
-  const walletEvoTask = cron.schedule(`0 */2 * * *`, async () => {
+  const walletEvoCronExpr = config.schedule.walletEvoCron || "0 */2 * * *";
+  const walletEvoTask = cron.schedule(walletEvoCronExpr, async () => {
     if (_walletEvoBusy) return;
     _walletEvoBusy = true;
     try {
@@ -962,7 +980,7 @@ Summarize the current portfolio health, total fees earned, and performance of al
   _cronTasks = [mgmtTask, screenTask, healthTask, briefingTask, briefingWatchdog, walletEvoTask];
   // Store interval ref so stopCronJobs can clear it
   _cronTasks._pnlPollInterval = pnlPollInterval;
-  log("cron", `Cycles started — management every ${config.schedule.managementIntervalMin}m, screening every ${config.schedule.screeningIntervalMin}m`);
+  log("cron", `Cycles started — management every ${config.schedule.managementIntervalMin}m, screening every ${config.schedule.screeningIntervalMin}m${offsetMin > 0 ? ` (offset +${offsetMin}m)` : ""}, wallet evo: ${walletEvoCronExpr}`);
 }
 
 // ═══════════════════════════════════════════

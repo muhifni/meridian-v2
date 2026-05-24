@@ -140,6 +140,8 @@ export const config = {
     managementIntervalMin:  u.managementIntervalMin  ?? 10,
     screeningIntervalMin:   u.screeningIntervalMin   ?? 30,
     healthCheckIntervalMin: u.healthCheckIntervalMin ?? 60,
+    screeningOffsetSec:     u.screeningOffsetSec     ?? 0,
+    walletEvoCron:          u.walletEvoCron           ?? "0 */2 * * *",
   },
 
   // ─── LLM Settings ──────────────────────
