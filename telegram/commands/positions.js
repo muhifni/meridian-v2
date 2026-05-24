@@ -110,7 +110,7 @@ positions.hears(/^\/set\s+(\d+)\s+(.+)$/i, async (ctx) => {
 // ─── Helpers ─────────────────────────────────────────────────────
 function formatWalletStatus(wallet, positions) {
   const sol = wallet?.sol ?? "?";
-  const usd = wallet?.usd ?? "?";
+  const usd = wallet?.sol_usd ?? "?";
   const posCount = positions?.total_positions ?? 0;
   return `💰 Wallet: ${sol} SOL (~$${usd})\n📊 Positions: ${posCount}`;
 }
