@@ -521,8 +521,21 @@ async function _optimizeConfig(closedPositions) {
         `avgPnL: ${avgPnl.toFixed(1)}%]`,
         suggestions.join(" | "),
       ].join(" | ");
-      addLesson(summary, ["config_optimizer", "dry_run", "self_tune"]);
-      log("simulator", `Config optimizer: ${suggestions.length} suggestion(s) added to lessons`);
+      // Dedup: replace existing CONFIG-OPTIMIZER lesson instead of creating duplicates
+      const LESSONS_FILE = path.join(__dirname, "lessons.json");
+      let lessonsData;
+      try { lessonsData = JSON.parse(fs.readFileSync(LESSONS_FILE, "utf8")); } catch { lessonsData = { lessons: [] }; }
+      const existingIdx = lessonsData.lessons.findIndex(l => l.rule && l.rule.startsWith("[CONFIG-OPTIMIZER"));
+      if (existingIdx >= 0) {
+        lessonsData.lessons[existingIdx].rule = summary;
+        lessonsData.lessons[existingIdx].created_at = new Date().toISOString();
+        lessonsData.lessons[existingIdx].score = 50; // reset score on update
+        fs.writeFileSync(LESSONS_FILE, JSON.stringify(lessonsData, null, 2));
+        log("simulator", `Config optimizer: updated existing lesson (${suggestions.length} suggestion(s))`);
+      } else {
+        addLesson(summary, ["config_optimizer", "dry_run", "self_tune"]);
+        log("simulator", `Config optimizer: ${suggestions.length} suggestion(s) added to lessons`);
+      }
     }
   } catch (err) {
     log("simulator_warn", `Config optimizer failed: ${err.message}`);

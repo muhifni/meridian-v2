@@ -155,10 +155,13 @@ export function pruneLessons(options = {}) {
   // Sort by final score desc
   scored.sort((a, b) => b._finalScore - a._finalScore);
 
-  // Keep top + pinned + high score
+  // Keep top + pinned + high score; prune stale unused lessons
   const keptLessons = scored
     .filter((l, idx) => {
       if (l.pinned) return true;
+      // Prune: unused lessons older than 7 days (never contributed to any decision)
+      const ageDays = (now - new Date(l.created_at || now).getTime()) / (1000 * 3600 * 24);
+      if ((l.usageCount || 0) === 0 && ageDays > 7) return false;
       if (l.score >= minScore) return true;
       if (idx < Math.floor(maxKeep * 0.6)) return true; // always keep top 60%
       return false;
