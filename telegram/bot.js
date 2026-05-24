@@ -27,11 +27,11 @@ async function registerCommands() {
       { command: "health", description: "Check all external services" },
       { command: "config", description: "Show runtime config" },
       { command: "screen", description: "Refresh candidate list" },
+      { command: "summary", description: "Agent-generated summary" },
       { command: "briefing", description: "Morning briefing" },
       { command: "sim", description: "Dry run stats" },
-      { command: "hive", description: "HiveMind sync status" },
       { command: "wallet", description: "Wallet balance" },
-      { command: "status", description: "Bot status overview" },
+      { command: "hive", description: "HiveMind sync status" },
       { command: "help", description: "Show all commands" },
     ]);
     log("telegram", "Commands registered via setMyCommands");
