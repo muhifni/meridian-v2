@@ -37,6 +37,7 @@ import { getTokenNarrative, getTokenInfo } from "./tools/token.js";
 import { stageSignals } from "./signal-tracker.js";
 import { getWeightsSummary } from "./signal-weights.js";
 import { bootstrapHiveMind, ensureAgentId, getHiveMindPullMode, isHiveMindEnabled, pullHiveMindLessons, pullHiveMindPresets, registerHiveMindAgent, startHiveMindBackgroundSync } from "./hivemind.js";
+import { initLogger, logManagementCycle } from "./position-logger.js";
 import { appendDecision } from "./decision-log.js";
 
 const entrypointPath = process.env.pm_exec_path || process.argv[1];
@@ -378,6 +379,19 @@ After executing, write a brief one-line result per position.
       log("cron", "Management: all positions STAY — skipping LLM");
       await liveMessage?.note("No tool actions needed.");
     }
+
+    // Log management cycle
+    initLogger();
+    logManagementCycle({
+      positions: positions.length,
+      openPositions: positionData.filter(p => actionMap.get(p.position)?.action !== "CLOSE").length,
+      totalValueUsd: totalValue,
+      totalUnclaimedUsd: totalUnclaimed,
+      actions: actionSummary,
+      needsLLM: actionPositions.length > 0,
+      llmModel: config.llm.managementModel,
+      isDryRun: process.env.DRY_RUN === "true",
+    });
 
     // Trigger screening after management
     const afterPositions = await getMyPositions({ force: true }).catch(() => null);

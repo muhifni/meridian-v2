@@ -48,3 +48,6 @@ telegram-history/*
 # Runtime virtual positions
 virtual-positions.json
 causal-analysis.json
+position-journal.db
+position-journal.db-shm
+position-journal.db-wal

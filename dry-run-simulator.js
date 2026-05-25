@@ -18,6 +18,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { log } from "./logger.js";
+import { logPositionClose, initLogger } from "./position-logger.js";
 import { config } from "./config.js";
 import { recordPerformance } from "./lessons.js";
 import { addToBlacklist } from "./token-blacklist.js";
@@ -471,6 +472,24 @@ async function _closeVirtualPosition(pos, evaluation) {
       log("simulator_warn", `Config optimizer error: ${e.message}`)
     );
   }
+
+  // Log virtual close to SQLite journal
+  initLogger();
+  logPositionClose({
+    positionId: pos.position,
+    poolAddress: pos.pool,
+    poolName: pos.pool_name,
+    pnlPct: evaluation.pnl_pct,
+    pnlUsd: evaluation.pnl_usd,
+    feesUsd: evaluation.fees_usd,
+    reason: evaluation.reason,
+    minutesHeld: evaluation.minutes_held,
+    dryRun: true,
+    volatility: pos.volatility,
+    feeTvlRatio: pos.fee_tvl_ratio,
+    organicScore: pos.organic_score,
+    signalSnapshot: pos.signal_snapshot,
+  });
 }
 
 // ─── Config optimizer ─────────────────────────────────────────
