@@ -474,10 +474,13 @@ export async function runScreeningCycle({ silent = false } = {}) {
   }
   timers.screeningLastRun = Date.now();
   log("cron", `Starting screening cycle [model: ${config.llm.screeningModel}]`);
+  const isDryRun = process.env.DRY_RUN === "true";
+  const _screenLog = { deployAmount: 0, llmModel: config.llm.screeningModel, isDryRun, candidatesFound: 0, candidatesPassed: 0, filteredReasons: [], deployAttempted: false, deploySucceeded: false };
   try {
     // Reuse pre-fetched balance — no extra RPC call needed
     const currentBalance = preBalance;
     const deployAmount = computeDeployAmount(currentBalance.sol);
+    _screenLog.deployAmount = deployAmount;
     log("cron", `Computed deploy amount: ${deployAmount} SOL (wallet: ${currentBalance.sol} SOL)`);
 
     // Load active strategy
@@ -501,6 +504,8 @@ export async function runScreeningCycle({ silent = false } = {}) {
     }
     const candidates = (topCandidates?.candidates || topCandidates?.pools || []).slice(0, 10);
     const earlyFilteredExamples = topCandidates?.filtered_examples || [];
+    _screenLog.candidatesFound = (topCandidates?.candidates || topCandidates?.pools || []).length;
+    _screenLog.earlyFiltered = earlyFilteredExamples.length;
 
     const allCandidates = [];
     log("cron", `[DEBUG] Starting recon loop for ${candidates.length} candidates`);
@@ -551,6 +556,8 @@ export async function runScreeningCycle({ silent = false } = {}) {
       }
       return true;
     });
+    _screenLog.candidatesPassed = passing.length;
+    _screenLog.filteredReasons = filteredOut.map(f => `${f.name}: ${f.reason}`).slice(0, 5);
 
     if (passing.length === 0) {
       log("cron", `[DEBUG] passing.length === 0, returning no candidates`);
@@ -792,6 +799,8 @@ IMPORTANT:
         reason: stripThink(content).slice(0, 500),
       });
     }
+    _screenLog.deployAttempted = deployAttempted;
+    _screenLog.deploySucceeded = deploySucceeded;
 
     // ── Wallet Evolution — discover new smart wallets, prune bad ones ──
     // Run async in background so it never delays the screening report
@@ -805,7 +814,6 @@ IMPORTANT:
     }
 
     // ── Dry Run Simulator — register virtual position if deploy happened ──
-    const isDryRun = process.env.DRY_RUN === "true";
     if (isDryRun && deploySucceeded) {
       const deployedPool = passing.find(({ pool }) =>
         content.includes(pool.pool) && content.includes("DEPLOYED")
@@ -832,10 +840,17 @@ IMPORTANT:
 
     // Log screening cycle result
     initLogger();
+    const result = _screenLog.deploySucceeded ? "deployed" : _screenLog.deployAttempted ? "deploy_failed" : screenReport?.includes("NO DEPLOY") ? "no_deploy" : screenReport?.includes("skipped") ? "skipped" : (screenReport?.includes("failed") || screenReport?.includes("cancelled")) ? "error" : "other";
     logScreeningCycle({
-      result: screenReport ? screenReport.includes("DEPLOYED") ? "deployed" : screenReport.includes("NO DEPLOY") ? "no_deploy" : screenReport.includes("skipped") ? "skipped" : "other" : "error",
+      result,
       summary: screenReport?.split("\n")?.[0] || "no report",
-      isDryRun: process.env.DRY_RUN === "true",
+      isDryRun,
+      deployAmount: _screenLog.deployAmount,
+      candidatesFound: _screenLog.candidatesFound,
+      candidatesPassed: _screenLog.candidatesPassed,
+      earlyFiltered: _screenLog.earlyFiltered,
+      filteredReasons: _screenLog.filteredReasons,
+      llmModel: _screenLog.llmModel,
     });
 
     // P1: Evaluate previously skipped pools (fire-and-forget, non-blocking)
