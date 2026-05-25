@@ -1,617 +1,6 @@
 {
   "entries": [
     {
-      "id": "1779619714529_106",
-      "pool_address": "59M8qFQTPQmER6REVRoSyPagE1nbr2ysym3T4pGBAyic",
-      "pool_name": "GAPLA-SOL",
-      "reason": "token cooldown active",
-      "metrics": {
-        "organic": 71,
-        "fee_tvl": 0.1406,
-        "volatility": 2.3359,
-        "volume": 2135,
-        "tvl": 31828,
-        "holders": 1625,
-        "bin_step": 100
-      },
-      "skipped_at": "2026-05-24T10:48:34.529Z",
-      "cycle_total_screened": 13,
-      "followup_status": "evaluated",
-      "followup_result": {
-        "was_profitable": false,
-        "reason": "no_fee_data"
-      }
-    },
-    {
-      "id": "1779619714529_107",
-      "pool_address": "BGRTiYMPfpfYANXxbAsgTW7KMPt6DTjahEytAZDvFwi3",
-      "pool_name": "RICH-SOL",
-      "reason": "token cooldown active",
-      "metrics": {
-        "organic": 93,
-        "fee_tvl": 0.212,
-        "volatility": 1.7223,
-        "volume": 20090,
-        "tvl": 177976,
-        "holders": 9039,
-        "bin_step": 100
-      },
-      "skipped_at": "2026-05-24T10:48:34.529Z",
-      "cycle_total_screened": 13,
-      "followup_status": "evaluated",
-      "followup_result": {
-        "was_profitable": false,
-        "reason": "no_fee_data"
-      }
-    },
-    {
-      "id": "1779619714529_108",
-      "pool_address": "7sSuYu9J7hHtr3EqLSxHT9mdkuxfnNiuNKrLsh5M6NcU",
-      "pool_name": "TRK-SOL",
-      "reason": "token cooldown active",
-      "metrics": {
-        "organic": 63,
-        "fee_tvl": 0.6095,
-        "volatility": 3.5876,
-        "volume": 859,
-        "tvl": 7440,
-        "holders": 1337,
-        "bin_step": 100
-      },
-      "skipped_at": "2026-05-24T10:48:34.529Z",
-      "cycle_total_screened": 13,
-      "followup_status": "evaluated",
-      "followup_result": {
-        "was_profitable": false,
-        "reason": "no_fee_data"
-      }
-    },
-    {
-      "id": "1779619714529_109",
-      "pool_address": "G4CJLQmTEc7mQzgw8kE18YRpEA7NGCXjzoGrk1SwskJ5",
-      "pool_name": "Bank-SOL",
-      "reason": "token cooldown active",
-      "metrics": {
-        "organic": 75,
-        "fee_tvl": 0.3926,
-        "volatility": 2.6514,
-        "volume": 9781,
-        "tvl": 56281,
-        "holders": 3660,
-        "bin_step": 125
-      },
-      "skipped_at": "2026-05-24T10:48:34.529Z",
-      "cycle_total_screened": 13,
-      "followup_status": "evaluated",
-      "followup_result": {
-        "was_profitable": false,
-        "reason": "no_fee_data"
-      }
-    },
-    {
-      "id": "1779619714529_110",
-      "pool_address": "2FMA5vAhYX59tibV45uhUg9XrYmrKh2x3KRG5BuhgGgk",
-      "pool_name": "TOLYBOT-SOL",
-      "reason": "token cooldown active",
-      "metrics": {
-        "organic": 80,
-        "fee_tvl": 0.1116,
-        "volatility": 2.8599,
-        "volume": 2719,
-        "tvl": 24168,
-        "holders": 5106,
-        "bin_step": 125
-      },
-      "skipped_at": "2026-05-24T10:48:34.529Z",
-      "cycle_total_screened": 13,
-      "followup_status": "evaluated",
-      "followup_result": {
-        "was_profitable": false,
-        "reason": "no_fee_data"
-      }
-    },
-    {
-      "id": "1779620008262_111",
-      "pool_address": null,
-      "pool_name": "RKC-SOL",
-      "reason": "volatility 0 is unusable",
-      "metrics": null,
-      "skipped_at": "2026-05-24T10:53:28.262Z",
-      "cycle_total_screened": 15,
-      "followup_status": "expired",
-      "followup_result": {
-        "reason": "no_pool_address"
-      }
-    },
-    {
-      "id": "1779620008262_112",
-      "pool_address": "BiB4ajTFpHwJtzEy5kA9kn8oap9cxXYKzCqycEWun8u3",
-      "pool_name": "DEGEN-SOL",
-      "reason": "token cooldown active",
-      "metrics": {
-        "organic": 83,
-        "fee_tvl": 0.1424,
-        "volatility": 1.965,
-        "volume": 685,
-        "tvl": 9356,
-        "holders": 6044,
-        "bin_step": 100
-      },
-      "skipped_at": "2026-05-24T10:53:28.262Z",
-      "cycle_total_screened": 15,
-      "followup_status": "evaluated",
-      "followup_result": {
-        "was_profitable": false,
-        "reason": "no_fee_data"
-      }
-    },
-    {
-      "id": "1779620008262_113",
-      "pool_address": "5wqpk5RqBtLR61uX2qcwqkotNHZqZfFZv2QbeJsgscif",
-      "pool_name": "Poor-SOL",
-      "reason": "token cooldown active",
-      "metrics": {
-        "organic": 85,
-        "fee_tvl": 1.1883,
-        "volatility": 2.9907,
-        "volume": 10376,
-        "tvl": 36892,
-        "holders": 2567,
-        "bin_step": 100
-      },
-      "skipped_at": "2026-05-24T10:53:28.262Z",
-      "cycle_total_screened": 15,
-      "followup_status": "evaluated",
-      "followup_result": {
-        "was_profitable": false,
-        "reason": "no_fee_data"
-      }
-    },
-    {
-      "id": "1779620008262_114",
-      "pool_address": "59M8qFQTPQmER6REVRoSyPagE1nbr2ysym3T4pGBAyic",
-      "pool_name": "GAPLA-SOL",
-      "reason": "token cooldown active",
-      "metrics": {
-        "organic": 71,
-        "fee_tvl": 0.1503,
-        "volatility": 2.2451,
-        "volume": 2258,
-        "tvl": 31804,
-        "holders": 1626,
-        "bin_step": 100
-      },
-      "skipped_at": "2026-05-24T10:53:28.262Z",
-      "cycle_total_screened": 15,
-      "followup_status": "evaluated",
-      "followup_result": {
-        "was_profitable": false,
-        "reason": "no_fee_data"
-      }
-    },
-    {
-      "id": "1779620008262_115",
-      "pool_address": "BGRTiYMPfpfYANXxbAsgTW7KMPt6DTjahEytAZDvFwi3",
-      "pool_name": "RICH-SOL",
-      "reason": "token cooldown active",
-      "metrics": {
-        "organic": 93,
-        "fee_tvl": 0.2092,
-        "volatility": 1.7223,
-        "volume": 19824,
-        "tvl": 178411,
-        "holders": 9040,
-        "bin_step": 100
-      },
-      "skipped_at": "2026-05-24T10:53:28.262Z",
-      "cycle_total_screened": 15,
-      "followup_status": "evaluated",
-      "followup_result": {
-        "was_profitable": false,
-        "reason": "no_fee_data"
-      }
-    },
-    {
-      "id": "1779620008262_116",
-      "pool_address": "7sSuYu9J7hHtr3EqLSxHT9mdkuxfnNiuNKrLsh5M6NcU",
-      "pool_name": "TRK-SOL",
-      "reason": "token cooldown active",
-      "metrics": {
-        "organic": 63,
-        "fee_tvl": 0.5471,
-        "volatility": 3.5876,
-        "volume": 859,
-        "tvl": 7440,
-        "holders": 1337,
-        "bin_step": 100
-      },
-      "skipped_at": "2026-05-24T10:53:28.262Z",
-      "cycle_total_screened": 15,
-      "followup_status": "evaluated",
-      "followup_result": {
-        "was_profitable": false,
-        "reason": "no_fee_data"
-      }
-    },
-    {
-      "id": "1779620008262_117",
-      "pool_address": "G4CJLQmTEc7mQzgw8kE18YRpEA7NGCXjzoGrk1SwskJ5",
-      "pool_name": "Bank-SOL",
-      "reason": "token cooldown active",
-      "metrics": {
-        "organic": 75,
-        "fee_tvl": 0.5458,
-        "volatility": 2.8097,
-        "volume": 11833,
-        "tvl": 55405,
-        "holders": 3657,
-        "bin_step": 125
-      },
-      "skipped_at": "2026-05-24T10:53:28.262Z",
-      "cycle_total_screened": 15,
-      "followup_status": "evaluated",
-      "followup_result": {
-        "was_profitable": false,
-        "reason": "no_fee_data"
-      }
-    },
-    {
-      "id": "1779620008262_118",
-      "pool_address": "2FMA5vAhYX59tibV45uhUg9XrYmrKh2x3KRG5BuhgGgk",
-      "pool_name": "TOLYBOT-SOL",
-      "reason": "token cooldown active",
-      "metrics": {
-        "organic": 80,
-        "fee_tvl": 0.1187,
-        "volatility": 2.566,
-        "volume": 2888,
-        "tvl": 24127,
-        "holders": 5111,
-        "bin_step": 125
-      },
-      "skipped_at": "2026-05-24T10:53:28.262Z",
-      "cycle_total_screened": 15,
-      "followup_status": "evaluated",
-      "followup_result": {
-        "was_profitable": false,
-        "reason": "no_fee_data"
-      }
-    },
-    {
-      "id": "1779620405337_119",
-      "pool_address": null,
-      "pool_name": "RKC-SOL",
-      "reason": "volatility 0 is unusable",
-      "metrics": null,
-      "skipped_at": "2026-05-24T11:00:05.337Z",
-      "cycle_total_screened": 15,
-      "followup_status": "expired",
-      "followup_result": {
-        "reason": "no_pool_address"
-      }
-    },
-    {
-      "id": "1779620405337_120",
-      "pool_address": "BiB4ajTFpHwJtzEy5kA9kn8oap9cxXYKzCqycEWun8u3",
-      "pool_name": "DEGEN-SOL",
-      "reason": "token cooldown active",
-      "metrics": {
-        "organic": 83,
-        "fee_tvl": 0.1264,
-        "volatility": 1.965,
-        "volume": 612,
-        "tvl": 9470,
-        "holders": 6046,
-        "bin_step": 100
-      },
-      "skipped_at": "2026-05-24T11:00:05.337Z",
-      "cycle_total_screened": 15,
-      "followup_status": "evaluated",
-      "followup_result": {
-        "was_profitable": false,
-        "reason": "no_fee_data"
-      }
-    },
-    {
-      "id": "1779620405337_121",
-      "pool_address": "2FMA5vAhYX59tibV45uhUg9XrYmrKh2x3KRG5BuhgGgk",
-      "pool_name": "TOLYBOT-SOL",
-      "reason": "token cooldown active",
-      "metrics": {
-        "organic": 80,
-        "fee_tvl": 0.1105,
-        "volatility": 2.2793,
-        "volume": 2681,
-        "tvl": 23987,
-        "holders": 5112,
-        "bin_step": 125
-      },
-      "skipped_at": "2026-05-24T11:00:05.337Z",
-      "cycle_total_screened": 15,
-      "followup_status": "evaluated",
-      "followup_result": {
-        "was_profitable": false,
-        "reason": "no_fee_data"
-      }
-    },
-    {
-      "id": "1779620405337_122",
-      "pool_address": "G4CJLQmTEc7mQzgw8kE18YRpEA7NGCXjzoGrk1SwskJ5",
-      "pool_name": "Bank-SOL",
-      "reason": "token cooldown active",
-      "metrics": {
-        "organic": 75,
-        "fee_tvl": 0.5345,
-        "volatility": 2.8097,
-        "volume": 12280,
-        "tvl": 57752,
-        "holders": 3658,
-        "bin_step": 125
-      },
-      "skipped_at": "2026-05-24T11:00:05.337Z",
-      "cycle_total_screened": 15,
-      "followup_status": "evaluated",
-      "followup_result": {
-        "was_profitable": false,
-        "reason": "no_fee_data"
-      }
-    },
-    {
-      "id": "1779620405337_123",
-      "pool_address": "BGRTiYMPfpfYANXxbAsgTW7KMPt6DTjahEytAZDvFwi3",
-      "pool_name": "RICH-SOL",
-      "reason": "token cooldown active",
-      "metrics": {
-        "organic": 93,
-        "fee_tvl": 0.2143,
-        "volatility": 1.6872,
-        "volume": 20264,
-        "tvl": 177771,
-        "holders": 9039,
-        "bin_step": 100
-      },
-      "skipped_at": "2026-05-24T11:00:05.337Z",
-      "cycle_total_screened": 15,
-      "followup_status": "evaluated",
-      "followup_result": {
-        "was_profitable": false,
-        "reason": "no_fee_data"
-      }
-    },
-    {
-      "id": "1779620405337_124",
-      "pool_address": "5wqpk5RqBtLR61uX2qcwqkotNHZqZfFZv2QbeJsgscif",
-      "pool_name": "Poor-SOL",
-      "reason": "token cooldown active",
-      "metrics": {
-        "organic": 85,
-        "fee_tvl": 1.2388,
-        "volatility": 3.0195,
-        "volume": 10609,
-        "tvl": 35731,
-        "holders": 2596,
-        "bin_step": 100
-      },
-      "skipped_at": "2026-05-24T11:00:05.337Z",
-      "cycle_total_screened": 15,
-      "followup_status": "evaluated",
-      "followup_result": {
-        "was_profitable": false,
-        "reason": "no_fee_data"
-      }
-    },
-    {
-      "id": "1779620405337_125",
-      "pool_address": "7sSuYu9J7hHtr3EqLSxHT9mdkuxfnNiuNKrLsh5M6NcU",
-      "pool_name": "TRK-SOL",
-      "reason": "token cooldown active",
-      "metrics": {
-        "organic": 63,
-        "fee_tvl": 0.5635,
-        "volatility": 3.5876,
-        "volume": 859,
-        "tvl": 7334,
-        "holders": 1339,
-        "bin_step": 100
-      },
-      "skipped_at": "2026-05-24T11:00:05.337Z",
-      "cycle_total_screened": 15,
-      "followup_status": "evaluated",
-      "followup_result": {
-        "was_profitable": false,
-        "reason": "no_fee_data"
-      }
-    },
-    {
-      "id": "1779620405337_126",
-      "pool_address": "59M8qFQTPQmER6REVRoSyPagE1nbr2ysym3T4pGBAyic",
-      "pool_name": "GAPLA-SOL",
-      "reason": "token cooldown active",
-      "metrics": {
-        "organic": 71,
-        "fee_tvl": 0.2265,
-        "volatility": 2.3042,
-        "volume": 3236,
-        "tvl": 31977,
-        "holders": 1627,
-        "bin_step": 100
-      },
-      "skipped_at": "2026-05-24T11:00:05.337Z",
-      "cycle_total_screened": 15,
-      "followup_status": "evaluated",
-      "followup_result": {
-        "was_profitable": false,
-        "reason": "no_fee_data"
-      }
-    },
-    {
-      "id": "1779621601864_127",
-      "pool_address": "G4CJLQmTEc7mQzgw8kE18YRpEA7NGCXjzoGrk1SwskJ5",
-      "pool_name": "Bank-SOL",
-      "reason": "token cooldown active",
-      "metrics": {
-        "organic": 75,
-        "fee_tvl": 0.7791,
-        "volatility": 2.7778,
-        "volume": 21693,
-        "tvl": 55722,
-        "holders": 3654,
-        "bin_step": 125
-      },
-      "skipped_at": "2026-05-24T11:20:01.864Z",
-      "cycle_total_screened": 13,
-      "followup_status": "evaluated",
-      "followup_result": {
-        "was_profitable": false,
-        "reason": "no_fee_data"
-      }
-    },
-    {
-      "id": "1779621601864_128",
-      "pool_address": "2FMA5vAhYX59tibV45uhUg9XrYmrKh2x3KRG5BuhgGgk",
-      "pool_name": "TOLYBOT-SOL",
-      "reason": "token cooldown active",
-      "metrics": {
-        "organic": 81,
-        "fee_tvl": 0.082,
-        "volatility": 2.5459,
-        "volume": 1921,
-        "tvl": 23006,
-        "holders": 5106,
-        "bin_step": 125
-      },
-      "skipped_at": "2026-05-24T11:20:01.864Z",
-      "cycle_total_screened": 13,
-      "followup_status": "evaluated",
-      "followup_result": {
-        "was_profitable": false,
-        "reason": "no_fee_data"
-      }
-    },
-    {
-      "id": "1779621601864_129",
-      "pool_address": "59M8qFQTPQmER6REVRoSyPagE1nbr2ysym3T4pGBAyic",
-      "pool_name": "GAPLA-SOL",
-      "reason": "token cooldown active",
-      "metrics": {
-        "organic": 71,
-        "fee_tvl": 0.3576,
-        "volatility": 2.901,
-        "volume": 4877,
-        "tvl": 31785,
-        "holders": 1621,
-        "bin_step": 100
-      },
-      "skipped_at": "2026-05-24T11:20:01.864Z",
-      "cycle_total_screened": 13,
-      "followup_status": "evaluated",
-      "followup_result": {
-        "was_profitable": false,
-        "reason": "no_fee_data"
-      }
-    },
-    {
-      "id": "1779621601864_130",
-      "pool_address": "4fAQF2roWPBwWg5Z2pLaBkkxkbmtM94EKeBGNynLcAAW",
-      "pool_name": "BABYTROLL-SOL",
-      "reason": "already have an open position in this pool",
-      "metrics": {
-        "organic": 78,
-        "fee_tvl": 0.2825,
-        "volatility": 2.4258,
-        "volume": 4391,
-        "tvl": 29681,
-        "holders": 5964,
-        "bin_step": 80
-      },
-      "skipped_at": "2026-05-24T11:20:01.864Z",
-      "cycle_total_screened": 13,
-      "followup_status": "evaluated",
-      "followup_result": {
-        "was_profitable": false,
-        "reason": "no_fee_data"
-      }
-    },
-    {
-      "id": "1779621601864_131",
-      "pool_address": "5wqpk5RqBtLR61uX2qcwqkotNHZqZfFZv2QbeJsgscif",
-      "pool_name": "Poor-SOL",
-      "reason": "token cooldown active",
-      "metrics": {
-        "organic": 85,
-        "fee_tvl": 1.1591,
-        "volatility": 3.4119,
-        "volume": 9704,
-        "tvl": 32655,
-        "holders": 2604,
-        "bin_step": 100
-      },
-      "skipped_at": "2026-05-24T11:20:01.864Z",
-      "cycle_total_screened": 13,
-      "followup_status": "evaluated",
-      "followup_result": {
-        "was_profitable": false,
-        "reason": "no_fee_data"
-      }
-    },
-    {
-      "id": "1779621601864_132",
-      "pool_address": "BGRTiYMPfpfYANXxbAsgTW7KMPt6DTjahEytAZDvFwi3",
-      "pool_name": "RICH-SOL",
-      "reason": "token cooldown active",
-      "metrics": {
-        "organic": 93,
-        "fee_tvl": 0.2108,
-        "volatility": 1.66,
-        "volume": 19766,
-        "tvl": 177828,
-        "holders": 9066,
-        "bin_step": 100
-      },
-      "skipped_at": "2026-05-24T11:20:01.864Z",
-      "cycle_total_screened": 13,
-      "followup_status": "evaluated",
-      "followup_result": {
-        "was_profitable": false,
-        "reason": "no_fee_data"
-      }
-    },
-    {
-      "id": "1779621601864_133",
-      "pool_address": "7sSuYu9J7hHtr3EqLSxHT9mdkuxfnNiuNKrLsh5M6NcU",
-      "pool_name": "TRK-SOL",
-      "reason": "token cooldown active",
-      "metrics": {
-        "organic": 63,
-        "fee_tvl": 0.503,
-        "volatility": 3.33,
-        "volume": 1237,
-        "tvl": 7897,
-        "holders": 1337,
-        "bin_step": 100
-      },
-      "skipped_at": "2026-05-24T11:20:01.864Z",
-      "cycle_total_screened": 13,
-      "followup_status": "evaluated",
-      "followup_result": {
-        "was_profitable": false,
-        "reason": "no_fee_data"
-      }
-    },
-    {
-      "id": "1779624020478_134",
-      "pool_address": null,
-      "pool_name": "Ball-SOL",
-      "reason": "volatility 0 is unusable",
-      "metrics": null,
-      "skipped_at": "2026-05-24T12:00:20.478Z",
-      "cycle_total_screened": 18,
-      "followup_status": "expired",
-      "followup_result": {
-        "reason": "no_pool_address"
-      }
-    },
-    {
       "id": "1779624020478_135",
       "pool_address": "HW4VN8LEaTosX6TjQZZnzQLmwJvfv49VJDNikjHg8Ejm",
       "pool_name": "RICH-SOL",
@@ -6002,8 +5391,11 @@
       },
       "skipped_at": "2026-05-25T02:00:09.980Z",
       "cycle_total_screened": 10,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "evaluated",
+      "followup_result": {
+        "was_profitable": false,
+        "reason": "no_fee_data"
+      }
     },
     {
       "id": "1779674409981_384",
@@ -6021,8 +5413,11 @@
       },
       "skipped_at": "2026-05-25T02:00:09.980Z",
       "cycle_total_screened": 10,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "evaluated",
+      "followup_result": {
+        "was_profitable": false,
+        "reason": "no_fee_data"
+      }
     },
     {
       "id": "1779674409981_385",
@@ -6040,8 +5435,11 @@
       },
       "skipped_at": "2026-05-25T02:00:09.980Z",
       "cycle_total_screened": 10,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "evaluated",
+      "followup_result": {
+        "was_profitable": false,
+        "reason": "no_fee_data"
+      }
     },
     {
       "id": "1779674409981_386",
@@ -6059,8 +5457,11 @@
       },
       "skipped_at": "2026-05-25T02:00:09.980Z",
       "cycle_total_screened": 10,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "evaluated",
+      "followup_result": {
+        "was_profitable": false,
+        "reason": "no_fee_data"
+      }
     },
     {
       "id": "1779674409981_387",
@@ -6078,8 +5479,11 @@
       },
       "skipped_at": "2026-05-25T02:00:09.980Z",
       "cycle_total_screened": 10,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "evaluated",
+      "followup_result": {
+        "was_profitable": false,
+        "reason": "no_fee_data"
+      }
     },
     {
       "id": "1779674409981_388",
@@ -6097,8 +5501,11 @@
       },
       "skipped_at": "2026-05-25T02:00:09.980Z",
       "cycle_total_screened": 10,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "evaluated",
+      "followup_result": {
+        "was_profitable": false,
+        "reason": "no_fee_data"
+      }
     },
     {
       "id": "1779674409981_389",
@@ -6116,8 +5523,11 @@
       },
       "skipped_at": "2026-05-25T02:00:09.980Z",
       "cycle_total_screened": 10,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "evaluated",
+      "followup_result": {
+        "was_profitable": false,
+        "reason": "no_fee_data"
+      }
     },
     {
       "id": "1779674409981_390",
@@ -6135,8 +5545,11 @@
       },
       "skipped_at": "2026-05-25T02:00:09.980Z",
       "cycle_total_screened": 10,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "evaluated",
+      "followup_result": {
+        "was_profitable": false,
+        "reason": "no_fee_data"
+      }
     },
     {
       "id": "1779675001984_391",
@@ -6146,8 +5559,10 @@
       "metrics": null,
       "skipped_at": "2026-05-25T02:10:01.984Z",
       "cycle_total_screened": 8,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "expired",
+      "followup_result": {
+        "reason": "no_pool_address"
+      }
     },
     {
       "id": "1779675001984_392",
@@ -6165,8 +5580,11 @@
       },
       "skipped_at": "2026-05-25T02:10:01.984Z",
       "cycle_total_screened": 8,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "evaluated",
+      "followup_result": {
+        "was_profitable": false,
+        "reason": "no_fee_data"
+      }
     },
     {
       "id": "1779675001984_393",
@@ -6184,8 +5602,11 @@
       },
       "skipped_at": "2026-05-25T02:10:01.984Z",
       "cycle_total_screened": 8,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "evaluated",
+      "followup_result": {
+        "was_profitable": false,
+        "reason": "no_fee_data"
+      }
     },
     {
       "id": "1779675001984_394",
@@ -6203,8 +5624,11 @@
       },
       "skipped_at": "2026-05-25T02:10:01.984Z",
       "cycle_total_screened": 8,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "evaluated",
+      "followup_result": {
+        "was_profitable": false,
+        "reason": "no_fee_data"
+      }
     },
     {
       "id": "1779675001984_395",
@@ -6222,8 +5646,11 @@
       },
       "skipped_at": "2026-05-25T02:10:01.984Z",
       "cycle_total_screened": 8,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "evaluated",
+      "followup_result": {
+        "was_profitable": false,
+        "reason": "no_fee_data"
+      }
     },
     {
       "id": "1779675001984_396",
@@ -6241,8 +5668,11 @@
       },
       "skipped_at": "2026-05-25T02:10:01.984Z",
       "cycle_total_screened": 8,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "evaluated",
+      "followup_result": {
+        "was_profitable": false,
+        "reason": "no_fee_data"
+      }
     },
     {
       "id": "1779675001984_397",
@@ -6260,8 +5690,11 @@
       },
       "skipped_at": "2026-05-25T02:10:01.984Z",
       "cycle_total_screened": 8,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "evaluated",
+      "followup_result": {
+        "was_profitable": false,
+        "reason": "no_fee_data"
+      }
     },
     {
       "id": "1779675001984_398",
@@ -6279,8 +5712,11 @@
       },
       "skipped_at": "2026-05-25T02:10:01.984Z",
       "cycle_total_screened": 8,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "evaluated",
+      "followup_result": {
+        "was_profitable": false,
+        "reason": "no_fee_data"
+      }
     },
     {
       "id": "1779675034734_399",
@@ -6290,8 +5726,10 @@
       "metrics": null,
       "skipped_at": "2026-05-25T02:10:34.734Z",
       "cycle_total_screened": 8,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "expired",
+      "followup_result": {
+        "reason": "no_pool_address"
+      }
     },
     {
       "id": "1779675034734_400",
@@ -6309,8 +5747,11 @@
       },
       "skipped_at": "2026-05-25T02:10:34.734Z",
       "cycle_total_screened": 8,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "evaluated",
+      "followup_result": {
+        "was_profitable": false,
+        "reason": "no_fee_data"
+      }
     },
     {
       "id": "1779675034734_401",
@@ -6328,8 +5769,11 @@
       },
       "skipped_at": "2026-05-25T02:10:34.734Z",
       "cycle_total_screened": 8,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "evaluated",
+      "followup_result": {
+        "was_profitable": false,
+        "reason": "no_fee_data"
+      }
     },
     {
       "id": "1779675034734_402",
@@ -6347,8 +5791,11 @@
       },
       "skipped_at": "2026-05-25T02:10:34.734Z",
       "cycle_total_screened": 8,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "evaluated",
+      "followup_result": {
+        "was_profitable": false,
+        "reason": "no_fee_data"
+      }
     },
     {
       "id": "1779675034734_403",
@@ -6366,8 +5813,11 @@
       },
       "skipped_at": "2026-05-25T02:10:34.734Z",
       "cycle_total_screened": 8,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "evaluated",
+      "followup_result": {
+        "was_profitable": false,
+        "reason": "no_fee_data"
+      }
     },
     {
       "id": "1779675034734_404",
@@ -6385,8 +5835,11 @@
       },
       "skipped_at": "2026-05-25T02:10:34.734Z",
       "cycle_total_screened": 8,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "evaluated",
+      "followup_result": {
+        "was_profitable": false,
+        "reason": "no_fee_data"
+      }
     },
     {
       "id": "1779675034734_405",
@@ -6404,8 +5857,11 @@
       },
       "skipped_at": "2026-05-25T02:10:34.734Z",
       "cycle_total_screened": 8,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "evaluated",
+      "followup_result": {
+        "was_profitable": false,
+        "reason": "no_fee_data"
+      }
     },
     {
       "id": "1779675034734_406",
@@ -6423,8 +5879,11 @@
       },
       "skipped_at": "2026-05-25T02:10:34.734Z",
       "cycle_total_screened": 8,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "evaluated",
+      "followup_result": {
+        "was_profitable": false,
+        "reason": "no_fee_data"
+      }
     },
     {
       "id": "1779675602094_407",
@@ -6434,8 +5893,10 @@
       "metrics": null,
       "skipped_at": "2026-05-25T02:20:02.094Z",
       "cycle_total_screened": 8,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "expired",
+      "followup_result": {
+        "reason": "no_pool_address"
+      }
     },
     {
       "id": "1779675602094_408",
@@ -6453,8 +5914,11 @@
       },
       "skipped_at": "2026-05-25T02:20:02.094Z",
       "cycle_total_screened": 8,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "evaluated",
+      "followup_result": {
+        "was_profitable": false,
+        "reason": "no_fee_data"
+      }
     },
     {
       "id": "1779675602094_409",
@@ -6472,8 +5936,11 @@
       },
       "skipped_at": "2026-05-25T02:20:02.094Z",
       "cycle_total_screened": 8,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "evaluated",
+      "followup_result": {
+        "was_profitable": false,
+        "reason": "no_fee_data"
+      }
     },
     {
       "id": "1779675602094_410",
@@ -6491,8 +5958,11 @@
       },
       "skipped_at": "2026-05-25T02:20:02.094Z",
       "cycle_total_screened": 8,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "evaluated",
+      "followup_result": {
+        "was_profitable": false,
+        "reason": "no_fee_data"
+      }
     },
     {
       "id": "1779675602094_411",
@@ -6510,8 +5980,11 @@
       },
       "skipped_at": "2026-05-25T02:20:02.094Z",
       "cycle_total_screened": 8,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "evaluated",
+      "followup_result": {
+        "was_profitable": false,
+        "reason": "no_fee_data"
+      }
     },
     {
       "id": "1779675602094_412",
@@ -6529,8 +6002,11 @@
       },
       "skipped_at": "2026-05-25T02:20:02.094Z",
       "cycle_total_screened": 8,
-      "followup_status": "pending",
-      "followup_result": null
+      "followup_status": "evaluated",
+      "followup_result": {
+        "was_profitable": false,
+        "reason": "no_fee_data"
+      }
     },
     {
       "id": "1779675602094_413",
@@ -10134,11 +9610,554 @@
       "cycle_total_screened": 11,
       "followup_status": "pending",
       "followup_result": null
+    },
+    {
+      "id": "1779688345894_500",
+      "pool_address": "FRkgppYGB4B2PvaEHio5hTh5BSzu3wyUznyWkYr2cM6v",
+      "pool_name": "ROUTER-SOL",
+      "reason": "already have an open position in this pool",
+      "metrics": {
+        "organic": 81,
+        "fee_tvl": 0.1001,
+        "volatility": 3.1515,
+        "volume": 879,
+        "tvl": 19237,
+        "holders": 1256,
+        "bin_step": 80
+      },
+      "skipped_at": "2026-05-25T05:52:25.894Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
+    },
+    {
+      "id": "1779688345894_501",
+      "pool_address": "9Gt3xw7Yg8zze1421swKV81RVJ7AvQuc4igEaURq2DDy",
+      "pool_name": "ROUTER-USDC",
+      "reason": "already holding this base token in another pool",
+      "metrics": {
+        "organic": 81,
+        "fee_tvl": 0.285,
+        "volatility": 3.6299,
+        "volume": 2160,
+        "tvl": 15247,
+        "holders": 1256,
+        "bin_step": 75
+      },
+      "skipped_at": "2026-05-25T05:52:25.894Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
+    },
+    {
+      "id": "1779688345894_502",
+      "pool_address": "BGRTiYMPfpfYANXxbAsgTW7KMPt6DTjahEytAZDvFwi3",
+      "pool_name": "RICH-SOL",
+      "reason": "token cooldown active",
+      "metrics": {
+        "organic": 75,
+        "fee_tvl": 1.2303,
+        "volatility": 2.6956,
+        "volume": 61936,
+        "tvl": 140002,
+        "holders": 8767,
+        "bin_step": 100
+      },
+      "skipped_at": "2026-05-25T05:52:25.894Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
+    },
+    {
+      "id": "1779688345894_503",
+      "pool_address": "G4CJLQmTEc7mQzgw8kE18YRpEA7NGCXjzoGrk1SwskJ5",
+      "pool_name": "Bank-SOL",
+      "reason": "token cooldown active",
+      "metrics": {
+        "organic": 75,
+        "fee_tvl": 0.2593,
+        "volatility": 2.9108,
+        "volume": 4734,
+        "tvl": 24450,
+        "holders": 3249,
+        "bin_step": 125
+      },
+      "skipped_at": "2026-05-25T05:52:25.894Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
+    },
+    {
+      "id": "1779688345894_504",
+      "pool_address": "ASic9uodfh4U4DEjgJwhN7VYEcirheyWhB18P3qJYWs4",
+      "pool_name": "Stake-SOL",
+      "reason": "token cooldown active",
+      "metrics": {
+        "organic": 75,
+        "fee_tvl": 0.7711,
+        "volatility": 2.7949,
+        "volume": 49757,
+        "tvl": 99400,
+        "holders": 4844,
+        "bin_step": 80
+      },
+      "skipped_at": "2026-05-25T05:52:25.894Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
+    },
+    {
+      "id": "1779688345894_505",
+      "pool_address": "Cbj8TZQdBwEWVgjLc7p2Xqx2D4CpekiPxPTB1qLS3SdT",
+      "pool_name": "TOLYBOT-SOL",
+      "reason": "token cooldown active",
+      "metrics": {
+        "organic": 78,
+        "fee_tvl": 0.1101,
+        "volatility": 2.5041,
+        "volume": 827,
+        "tvl": 22540,
+        "holders": 5135,
+        "bin_step": 100
+      },
+      "skipped_at": "2026-05-25T05:52:25.894Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
+    },
+    {
+      "id": "1779688345894_506",
+      "pool_address": "4fAQF2roWPBwWg5Z2pLaBkkxkbmtM94EKeBGNynLcAAW",
+      "pool_name": "BABYTROLL-SOL",
+      "reason": "volatility 0 is unusable",
+      "metrics": {
+        "organic": 75,
+        "fee_tvl": 0.0712,
+        "volatility": 0,
+        "volume": 687,
+        "tvl": 18184,
+        "holders": 5915,
+        "bin_step": 80
+      },
+      "skipped_at": "2026-05-25T05:52:25.894Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
+    },
+    {
+      "id": "1779688345894_507",
+      "pool_address": "2FMA5vAhYX59tibV45uhUg9XrYmrKh2x3KRG5BuhgGgk",
+      "pool_name": "TOLYBOT-SOL",
+      "reason": "token cooldown active",
+      "metrics": {
+        "organic": 78,
+        "fee_tvl": 0.3985,
+        "volatility": 3.25,
+        "volume": 6512,
+        "tvl": 18669,
+        "holders": 5135,
+        "bin_step": 125
+      },
+      "skipped_at": "2026-05-25T05:52:25.894Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
+    },
+    {
+      "id": "1779688345894_508",
+      "pool_address": "DkMx7Y9DwMo4sibDL3HwbQwsbNY8kyNTxYjN27hnru4c",
+      "pool_name": "Stake-SOL",
+      "reason": "token cooldown active",
+      "metrics": {
+        "organic": 75,
+        "fee_tvl": 0.5708,
+        "volatility": 2.9978,
+        "volume": 901,
+        "tvl": 8137,
+        "holders": 4844,
+        "bin_step": 100
+      },
+      "skipped_at": "2026-05-25T05:52:25.894Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
+    },
+    {
+      "id": "1779688345894_509",
+      "pool_address": "74rUJcAN94inRM6dQtWLV3q1rXAG9TjQTxwDt33vVcos",
+      "pool_name": "Stake-SOL",
+      "reason": "token cooldown active",
+      "metrics": {
+        "organic": 75,
+        "fee_tvl": 0.6224,
+        "volatility": 2.7436,
+        "volume": 3757,
+        "tvl": 8981,
+        "holders": 4844,
+        "bin_step": 75
+      },
+      "skipped_at": "2026-05-25T05:52:25.894Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
+    },
+    {
+      "id": "1779688804321_500",
+      "pool_address": null,
+      "pool_name": "RKC-SOL",
+      "reason": "volatility 0 is unusable",
+      "metrics": null,
+      "skipped_at": "2026-05-25T06:00:04.321Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
+    },
+    {
+      "id": "1779688804321_501",
+      "pool_address": "FRkgppYGB4B2PvaEHio5hTh5BSzu3wyUznyWkYr2cM6v",
+      "pool_name": "ROUTER-SOL",
+      "reason": "already have an open position in this pool",
+      "metrics": {
+        "organic": 81,
+        "fee_tvl": 0.106,
+        "volatility": 3.394,
+        "volume": 941,
+        "tvl": 19406,
+        "holders": 1258,
+        "bin_step": 80
+      },
+      "skipped_at": "2026-05-25T06:00:04.321Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
+    },
+    {
+      "id": "1779688804321_502",
+      "pool_address": "BGRTiYMPfpfYANXxbAsgTW7KMPt6DTjahEytAZDvFwi3",
+      "pool_name": "RICH-SOL",
+      "reason": "token cooldown active",
+      "metrics": {
+        "organic": 75,
+        "fee_tvl": 1.0904,
+        "volatility": 2.4115,
+        "volume": 52970,
+        "tvl": 139487,
+        "holders": 8765,
+        "bin_step": 100
+      },
+      "skipped_at": "2026-05-25T06:00:04.321Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
+    },
+    {
+      "id": "1779688804321_503",
+      "pool_address": "9Gt3xw7Yg8zze1421swKV81RVJ7AvQuc4igEaURq2DDy",
+      "pool_name": "ROUTER-USDC",
+      "reason": "already holding this base token in another pool",
+      "metrics": {
+        "organic": 81,
+        "fee_tvl": 0.3173,
+        "volatility": 3.5493,
+        "volume": 2293,
+        "tvl": 15300,
+        "holders": 1258,
+        "bin_step": 75
+      },
+      "skipped_at": "2026-05-25T06:00:04.321Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
+    },
+    {
+      "id": "1779688804321_504",
+      "pool_address": "2FMA5vAhYX59tibV45uhUg9XrYmrKh2x3KRG5BuhgGgk",
+      "pool_name": "TOLYBOT-SOL",
+      "reason": "token cooldown active",
+      "metrics": {
+        "organic": 78,
+        "fee_tvl": 0.4809,
+        "volatility": 2.9923,
+        "volume": 7687,
+        "tvl": 21540,
+        "holders": 5110,
+        "bin_step": 125
+      },
+      "skipped_at": "2026-05-25T06:00:04.321Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
+    },
+    {
+      "id": "1779688804321_505",
+      "pool_address": "G4CJLQmTEc7mQzgw8kE18YRpEA7NGCXjzoGrk1SwskJ5",
+      "pool_name": "Bank-SOL",
+      "reason": "token cooldown active",
+      "metrics": {
+        "organic": 75,
+        "fee_tvl": 0.3008,
+        "volatility": 2.9128,
+        "volume": 5856,
+        "tvl": 24047,
+        "holders": 3250,
+        "bin_step": 125
+      },
+      "skipped_at": "2026-05-25T06:00:04.321Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
+    },
+    {
+      "id": "1779688804321_506",
+      "pool_address": "Cbj8TZQdBwEWVgjLc7p2Xqx2D4CpekiPxPTB1qLS3SdT",
+      "pool_name": "TOLYBOT-SOL",
+      "reason": "token cooldown active",
+      "metrics": {
+        "organic": 78,
+        "fee_tvl": 0.1266,
+        "volatility": 2.0513,
+        "volume": 913,
+        "tvl": 22442,
+        "holders": 5110,
+        "bin_step": 100
+      },
+      "skipped_at": "2026-05-25T06:00:04.321Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
+    },
+    {
+      "id": "1779688804321_507",
+      "pool_address": "DkMx7Y9DwMo4sibDL3HwbQwsbNY8kyNTxYjN27hnru4c",
+      "pool_name": "Stake-SOL",
+      "reason": "token cooldown active",
+      "metrics": {
+        "organic": 75,
+        "fee_tvl": 0.6128,
+        "volatility": 2.8136,
+        "volume": 1057,
+        "tvl": 8789,
+        "holders": 4828,
+        "bin_step": 100
+      },
+      "skipped_at": "2026-05-25T06:00:04.321Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
+    },
+    {
+      "id": "1779688804321_508",
+      "pool_address": "ASic9uodfh4U4DEjgJwhN7VYEcirheyWhB18P3qJYWs4",
+      "pool_name": "Stake-SOL",
+      "reason": "token cooldown active",
+      "metrics": {
+        "organic": 75,
+        "fee_tvl": 0.927,
+        "volatility": 2.9098,
+        "volume": 55833,
+        "tvl": 97904,
+        "holders": 4828,
+        "bin_step": 80
+      },
+      "skipped_at": "2026-05-25T06:00:04.321Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
+    },
+    {
+      "id": "1779688804321_509",
+      "pool_address": "74rUJcAN94inRM6dQtWLV3q1rXAG9TjQTxwDt33vVcos",
+      "pool_name": "Stake-SOL",
+      "reason": "token cooldown active",
+      "metrics": {
+        "organic": 75,
+        "fee_tvl": 0.7033,
+        "volatility": 2.8521,
+        "volume": 4145,
+        "tvl": 8734,
+        "holders": 4828,
+        "bin_step": 75
+      },
+      "skipped_at": "2026-05-25T06:00:04.321Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
+    },
+    {
+      "id": "1779689405198_500",
+      "pool_address": "2FMA5vAhYX59tibV45uhUg9XrYmrKh2x3KRG5BuhgGgk",
+      "pool_name": "TOLYBOT-SOL",
+      "reason": "token cooldown active",
+      "metrics": {
+        "organic": 78,
+        "fee_tvl": 0.4979,
+        "volatility": 2.68,
+        "volume": 8394,
+        "tvl": 19810,
+        "holders": 5106,
+        "bin_step": 125
+      },
+      "skipped_at": "2026-05-25T06:10:05.198Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
+    },
+    {
+      "id": "1779689405198_501",
+      "pool_address": "BGRTiYMPfpfYANXxbAsgTW7KMPt6DTjahEytAZDvFwi3",
+      "pool_name": "RICH-SOL",
+      "reason": "token cooldown active",
+      "metrics": {
+        "organic": 75,
+        "fee_tvl": 0.4332,
+        "volatility": 1.9269,
+        "volume": 28867,
+        "tvl": 137718,
+        "holders": 8756,
+        "bin_step": 100
+      },
+      "skipped_at": "2026-05-25T06:10:05.198Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
+    },
+    {
+      "id": "1779689405198_502",
+      "pool_address": "FRkgppYGB4B2PvaEHio5hTh5BSzu3wyUznyWkYr2cM6v",
+      "pool_name": "ROUTER-SOL",
+      "reason": "already have an open position in this pool",
+      "metrics": {
+        "organic": 81,
+        "fee_tvl": 0.0995,
+        "volatility": 4.7532,
+        "volume": 879,
+        "tvl": 19821,
+        "holders": 1260,
+        "bin_step": 80
+      },
+      "skipped_at": "2026-05-25T06:10:05.198Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
+    },
+    {
+      "id": "1779689405198_503",
+      "pool_address": "G4CJLQmTEc7mQzgw8kE18YRpEA7NGCXjzoGrk1SwskJ5",
+      "pool_name": "Bank-SOL",
+      "reason": "token cooldown active",
+      "metrics": {
+        "organic": 75,
+        "fee_tvl": 0.3796,
+        "volatility": 3.6754,
+        "volume": 8744,
+        "tvl": 30362,
+        "holders": 3251,
+        "bin_step": 125
+      },
+      "skipped_at": "2026-05-25T06:10:05.198Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
+    },
+    {
+      "id": "1779689405198_504",
+      "pool_address": "9Gt3xw7Yg8zze1421swKV81RVJ7AvQuc4igEaURq2DDy",
+      "pool_name": "ROUTER-USDC",
+      "reason": "already holding this base token in another pool",
+      "metrics": {
+        "organic": 81,
+        "fee_tvl": 0.3019,
+        "volatility": 3.5721,
+        "volume": 2200,
+        "tvl": 15301,
+        "holders": 1260,
+        "bin_step": 75
+      },
+      "skipped_at": "2026-05-25T06:10:05.198Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
+    },
+    {
+      "id": "1779689405198_505",
+      "pool_address": "Cbj8TZQdBwEWVgjLc7p2Xqx2D4CpekiPxPTB1qLS3SdT",
+      "pool_name": "TOLYBOT-SOL",
+      "reason": "token cooldown active",
+      "metrics": {
+        "organic": 78,
+        "fee_tvl": 0.1258,
+        "volatility": 2.0513,
+        "volume": 926,
+        "tvl": 22548,
+        "holders": 5106,
+        "bin_step": 100
+      },
+      "skipped_at": "2026-05-25T06:10:05.198Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
+    },
+    {
+      "id": "1779689405198_506",
+      "pool_address": "DkMx7Y9DwMo4sibDL3HwbQwsbNY8kyNTxYjN27hnru4c",
+      "pool_name": "Stake-SOL",
+      "reason": "token cooldown active",
+      "metrics": {
+        "organic": 75,
+        "fee_tvl": 0.3704,
+        "volatility": 2.6051,
+        "volume": 650,
+        "tvl": 8803,
+        "holders": 4843,
+        "bin_step": 100
+      },
+      "skipped_at": "2026-05-25T06:10:05.198Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
+    },
+    {
+      "id": "1779689405198_507",
+      "pool_address": "ASic9uodfh4U4DEjgJwhN7VYEcirheyWhB18P3qJYWs4",
+      "pool_name": "Stake-SOL",
+      "reason": "token cooldown active",
+      "metrics": {
+        "organic": 75,
+        "fee_tvl": 0.668,
+        "volatility": 2.6489,
+        "volume": 41448,
+        "tvl": 101645,
+        "holders": 4843,
+        "bin_step": 80
+      },
+      "skipped_at": "2026-05-25T06:10:05.198Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
+    },
+    {
+      "id": "1779689405198_508",
+      "pool_address": "74rUJcAN94inRM6dQtWLV3q1rXAG9TjQTxwDt33vVcos",
+      "pool_name": "Stake-SOL",
+      "reason": "token cooldown active",
+      "metrics": {
+        "organic": 75,
+        "fee_tvl": 0.4796,
+        "volatility": 2.6007,
+        "volume": 2916,
+        "tvl": 9072,
+        "holders": 4843,
+        "bin_step": 75
+      },
+      "skipped_at": "2026-05-25T06:10:05.198Z",
+      "cycle_total_screened": 12,
+      "followup_status": "pending",
+      "followup_result": null
     }
   ],
   "stats": {
-    "total_skipped": 606,
-    "total_evaluated": 383,
+    "total_skipped": 635,
+    "total_evaluated": 413,
     "missed_opportunities": 0
   }
 }

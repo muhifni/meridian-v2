@@ -1,7 +1,7 @@
 import { Composer } from "grammy";
 import { getMyPositions, closePosition } from "../../tools/dlmm.js";
 import { config } from "../../config.js";
-import { getWalletBalances } from "../../tools/wallet.js";
+import { getWallet, getWalletBalances } from "../../tools/wallet.js";
 import { setPositionInstruction } from "../../state.js";
 import { getVirtualWalletSummary } from "../../dry-run-simulator.js";
 import { minutesOutOfRange } from "../../state.js";
@@ -14,7 +14,7 @@ positions.command("wallet", async (ctx) => {
     const wallet = await getWalletBalances();
     const sol = wallet?.sol ?? "?";
     const usd = wallet?.sol_usd ?? "?";
-    const addr = config.wallet ?? "?";
+    const addr = (() => { try { return getWallet().publicKey.toString(); } catch { return "?"; } })();
     const shortAddr = addr.length > 10 ? `${addr.slice(0, 4)}...${addr.slice(-4)}` : addr;
     let reply = `💰 Wallet: ${sol} SOL (~$${usd})\nAddress: \`${shortAddr}\``;
 
