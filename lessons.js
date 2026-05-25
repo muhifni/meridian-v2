@@ -707,11 +707,19 @@ function fmt(lessons) {
  * @param {number} [opts.hours=24]   - How many hours back to look
  * @param {number} [opts.limit=50]   - Max records to return
  */
-export function getPerformanceHistory({ hours = 24, limit = 50 } = {}) {
+export function getPerformanceHistory({ hours = 24, limit = 50, mode } = {}) {
   const data = load();
-  const p = data.performance;
+  let p = data.performance;
 
-  if (p.length === 0) return { positions: [], count: 0, hours };
+  // Filter virtual in live mode (consistent with getPerformanceSummary)
+  const effectiveMode = mode || (process.env.DRY_RUN === "true" ? "all" : "live");
+  if (effectiveMode === "live") {
+    p = p.filter(x => !x.virtual);
+  } else if (effectiveMode === "virtual") {
+    p = p.filter(x => x.virtual);
+  }
+
+  if (p.length === 0) return { positions: [], count: 0, hours, mode: effectiveMode };
 
   const cutoff = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
 
