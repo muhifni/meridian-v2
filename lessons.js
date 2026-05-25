@@ -168,7 +168,13 @@ export async function recordPerformance(perf) {
   // Evolve thresholds every 5 closed positions
   if (data.performance.length % MIN_EVOLVE_POSITIONS === 0) {
     const { config, reloadScreeningThresholds } = await import("./config.js");
-    const result = evolveThresholds(data.performance, config);
+    // In live mode, exclude virtual (dry run) data from evolution
+    const livePerf = process.env.DRY_RUN === "true"
+      ? data.performance
+      : data.performance.filter(x => !x.virtual);
+    const result = livePerf.length >= MIN_EVOLVE_POSITIONS
+      ? evolveThresholds(livePerf, config)
+      : null;
     if (result?.changes && Object.keys(result.changes).length > 0) {
       reloadScreeningThresholds();
       log("evolve", `Auto-evolved thresholds: ${JSON.stringify(result.changes)}`);
@@ -739,10 +745,24 @@ export function getPerformanceHistory({ hours = 24, limit = 50 } = {}) {
 
 /**
  * Get performance stats summary.
+ * @param {Object} [options]
+ * @param {string} [options.mode='auto'] - 'auto': live mode excludes virtual, dry run includes all
+ *                                         'live': exclude virtual records
+ *                                         'virtual': only virtual records
+ *                                         'all': include everything
  */
-export function getPerformanceSummary() {
+export function getPerformanceSummary(options = {}) {
+  const mode = options.mode || 'auto';
   const data = load();
-  const p = data.performance;
+  let p = data.performance;
+
+  // Filter based on mode
+  if (mode === 'live' || (mode === 'auto' && process.env.DRY_RUN !== 'true')) {
+    p = p.filter(x => !x.virtual);
+  } else if (mode === 'virtual') {
+    p = p.filter(x => x.virtual);
+  }
+  // mode='all' or mode='auto' + dry run → no filter
 
   if (p.length === 0) return null;
 
@@ -762,5 +782,8 @@ export function getPerformanceSummary() {
       return denom > 0 ? Math.round((wins / denom) * 100) : 0;
     })(),
     total_lessons: data.lessons.length,
+    mode: mode === 'auto'
+      ? (process.env.DRY_RUN === 'true' ? 'all' : 'live')
+      : mode,
   };
 }

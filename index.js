@@ -2356,7 +2356,15 @@ Focus on: hold duration, entry/exit timing, what win rates look like, whether sc
         }
         const fs = await import("fs");
         const lessonsData = JSON.parse(fs.default.readFileSync("./lessons.json", "utf8"));
-        const result = evolveThresholds(lessonsData.performance, config);
+        // In live mode, exclude virtual (dry run) data from evolution
+        const evolveData = process.env.DRY_RUN === "true"
+          ? lessonsData.performance
+          : lessonsData.performance.filter(x => !x.virtual);
+        if (evolveData.length < 5) {
+          console.log(`\nNeed at least 5 non-virtual closed positions to evolve. ${5 - evolveData.length} more needed.\n`);
+          return;
+        }
+        const result = evolveThresholds(evolveData, config);
         if (!result || Object.keys(result.changes).length === 0) {
           console.log("\nNo threshold changes needed — current settings already match performance data.\n");
         } else {
