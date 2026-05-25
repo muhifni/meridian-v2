@@ -1,0 +1,463 @@
+{
+  "wallets": [
+    {
+      "name": "LADA_top1",
+      "address": "E67mtq97uUqRjYif9dRqnFhzMQbin8nmcBjAkVm3z4vp",
+      "category": "kol",
+      "type": "lp",
+      "source": "manual",
+      "addedAt": "2026-05-17T00:00:00.000Z",
+      "note": "LADA-SOL top LPer — win rate 100%, avg PnL +64.4%, avg hold 5.5h, spot medium"
+    },
+    {
+      "name": "LADA_top2",
+      "address": "A7FHS2ZKJhp1Vq6bs42aaqdbXeECMFXcUKfZvQE6gzwk",
+      "category": "kol",
+      "type": "lp",
+      "source": "manual",
+      "addedAt": "2026-05-17T00:00:00.000Z",
+      "note": "LADA-SOL top LPer — win rate 100%, avg PnL +39.0%, avg hold 5.7h, spot medium"
+    },
+    {
+      "name": "LADA_top3",
+      "address": "2vYAHRxUECxfLDS5KzWDorJC1SHWR23ehqFGuRu8GVmq",
+      "category": "kol",
+      "type": "lp",
+      "source": "manual",
+      "addedAt": "2026-05-17T00:00:00.000Z",
+      "note": "LADA-SOL top LPer — win rate 100%, avg PnL +28.3%, avg hold 1h"
+    },
+    {
+      "name": "auto_LADASOL_2VPV4q",
+      "address": "2VPV4qczT8Hf7pnt1CSZ68QBvzoXxufaVUs6s1QWEmpX",
+      "category": "alpha",
+      "type": "lp",
+      "source": "auto",
+      "addedAt": "2026-05-16T22:34:19.466Z",
+      "stats": {
+        "win_rate": 1,
+        "total_positions_observed": 3,
+        "avg_pnl_pct": 25,
+        "preferred_strategy": "unknown",
+        "first_seen_pool": "3kEghxk7SmypW4khCq5PjMn1WbjWMdrqpEUzKqAty8nE",
+        "last_seen": "2026-05-16T22:34:19.466Z"
+      }
+    },
+    {
+      "name": "auto_YaeSOL_DpYNcy",
+      "address": "DpYNcyfqq8ZDgHGfPk5UxxLHBLpgvp5NsjNCnARWa5uE",
+      "category": "alpha",
+      "type": "lp",
+      "source": "auto",
+      "addedAt": "2026-05-16T22:35:41.212Z",
+      "stats": {
+        "win_rate": 1,
+        "total_positions_observed": 3,
+        "avg_pnl_pct": 33.75,
+        "preferred_strategy": "unknown",
+        "first_seen_pool": "78yUjui1RzG5mzc6nQb3CBazHyA9EK1fjVHFKwx2wB6n",
+        "last_seen": "2026-05-16T22:35:41.212Z"
+      }
+    },
+    {
+      "name": "auto_YaeSOL_HBTTUi",
+      "address": "HBTTUinMKsiYWys7pnqgDf7RYT7VHYpTAwWhmkwDkJtS",
+      "category": "alpha",
+      "type": "lp",
+      "source": "auto",
+      "addedAt": "2026-05-16T22:35:41.212Z",
+      "stats": {
+        "win_rate": 0.898,
+        "total_positions_observed": 6,
+        "avg_pnl_pct": 19.908,
+        "preferred_strategy": "unknown",
+        "first_seen_pool": "8qbrfc8qTnNGMFfxYyijn2KCMzJj6un2QcmktMQC762H",
+        "last_seen": "2026-05-19T05:00:35.796Z"
+      }
+    },
+    {
+      "name": "auto_BABYTROLLS_AynDmP",
+      "address": "AynDmPsgmVP6GSk6uFeJdyGut3inoWKj35q7n4SzBqvD",
+      "category": "alpha",
+      "type": "lp",
+      "source": "auto",
+      "addedAt": "2026-05-16T23:01:00.547Z",
+      "stats": {
+        "win_rate": 1,
+        "total_positions_observed": 5,
+        "avg_pnl_pct": 44.9,
+        "preferred_strategy": "unknown",
+        "first_seen_pool": "4fAQF2roWPBwWg5Z2pLaBkkxkbmtM94EKeBGNynLcAAW",
+        "last_seen": "2026-05-16T23:01:00.546Z"
+      }
+    },
+    {
+      "name": "auto_BABYTROLLS_FJ4s5K",
+      "address": "FJ4s5KYaGgJG9sBY76RJ7Kf1v41QqkjTuD5inbw8S3G5",
+      "category": "alpha",
+      "type": "lp",
+      "source": "auto",
+      "addedAt": "2026-05-16T23:01:00.549Z",
+      "stats": {
+        "win_rate": 1,
+        "total_positions_observed": 4,
+        "avg_pnl_pct": 37.8,
+        "preferred_strategy": "spot",
+        "first_seen_pool": "4fAQF2roWPBwWg5Z2pLaBkkxkbmtM94EKeBGNynLcAAW",
+        "last_seen": "2026-05-16T23:01:00.549Z"
+      }
+    },
+    {
+      "name": "auto_RoyalPopSO_DJMdxc",
+      "address": "DJMdxcP4SFq6mT6pFQ4u68apCkWq62qFFTp7w44VDew5",
+      "category": "alpha",
+      "type": "lp",
+      "source": "auto",
+      "addedAt": "2026-05-16T23:01:00.549Z",
+      "stats": {
+        "win_rate": 1,
+        "total_positions_observed": 2,
+        "avg_pnl_pct": 29.67,
+        "preferred_strategy": "unknown",
+        "first_seen_pool": "8xECmRrJsviYqzFt1S6anofeUsX1CwUTHpY8u3hSstkB",
+        "last_seen": "2026-05-16T23:01:00.549Z"
+      }
+    },
+    {
+      "name": "auto_YaeSOL_FEDA3o",
+      "address": "FEDA3oQSVpeh6saL8ZDSJMa1yv1U6A1juNHUSvyn2Hm9",
+      "category": "alpha",
+      "type": "lp",
+      "source": "auto",
+      "addedAt": "2026-05-17T00:24:29.356Z",
+      "stats": {
+        "win_rate": 1,
+        "total_positions_observed": 2,
+        "avg_pnl_pct": 24.81,
+        "preferred_strategy": "unknown",
+        "first_seen_pool": "78yUjui1RzG5mzc6nQb3CBazHyA9EK1fjVHFKwx2wB6n",
+        "last_seen": "2026-05-17T00:24:29.356Z"
+      }
+    },
+    {
+      "name": "auto_SPCXSOL_CKs7WH",
+      "address": "CKs7WHryW6Esk7S65h2Syts8WbL1anW6YBpYBUuehkVc",
+      "category": "alpha",
+      "type": "lp",
+      "source": "auto",
+      "addedAt": "2026-05-17T01:48:46.585Z",
+      "stats": {
+        "win_rate": 1,
+        "total_positions_observed": 2,
+        "avg_pnl_pct": 28.94,
+        "preferred_strategy": "bid_ask",
+        "first_seen_pool": "8aQBjuutghvFxJaiPiKNSgbmuAQcotyWpcmBFR9pkzsP",
+        "last_seen": "2026-05-17T01:48:46.584Z"
+      }
+    },
+    {
+      "name": "auto_67SOL_5QpBN6",
+      "address": "5QpBN6WTKZDKftFKqTZY66N4kVRt4Y4Hiqqb7r6KNBfS",
+      "category": "alpha",
+      "type": "lp",
+      "source": "auto",
+      "addedAt": "2026-05-17T02:37:31.494Z",
+      "stats": {
+        "win_rate": 1,
+        "total_positions_observed": 2,
+        "avg_pnl_pct": 155.19,
+        "preferred_strategy": "bid_ask",
+        "first_seen_pool": "Da6gBAjx2G4V1zbk7DNkKfDAzk3VVxS3aCoe5QN3TbxJ",
+        "last_seen": "2026-05-17T02:37:31.494Z"
+      }
+    },
+    {
+      "name": "auto_67SOL_9J4gGb",
+      "address": "9J4gGbsUEoDomjTmW6tt3AUFo6gdiYfjTbppT58H7vgr",
+      "category": "alpha",
+      "type": "lp",
+      "source": "auto",
+      "addedAt": "2026-05-17T02:37:31.495Z",
+      "stats": {
+        "win_rate": 1,
+        "total_positions_observed": 2,
+        "avg_pnl_pct": 85.08,
+        "preferred_strategy": "unknown",
+        "first_seen_pool": "Da6gBAjx2G4V1zbk7DNkKfDAzk3VVxS3aCoe5QN3TbxJ",
+        "last_seen": "2026-05-17T02:37:31.495Z"
+      }
+    },
+    {
+      "name": "auto_67SOL_Fh5htp",
+      "address": "Fh5htpuHk9kwB5GWt3Gu9zkH2uxd6GEw388hVA3zj7xM",
+      "category": "alpha",
+      "type": "lp",
+      "source": "auto",
+      "addedAt": "2026-05-17T02:37:31.496Z",
+      "stats": {
+        "win_rate": 1,
+        "total_positions_observed": 2,
+        "avg_pnl_pct": 40.83,
+        "preferred_strategy": "spot",
+        "first_seen_pool": "Adjc5ZVA5SXXfVoetF8NTsiGt1C8wm4gbEW89nys11JS",
+        "last_seen": "2026-05-17T02:37:31.496Z"
+      }
+    },
+    {
+      "name": "auto_YaeSOL_Gb5mKL",
+      "address": "Gb5mKL2qgkZC8NqDappXkXrBmSNpB5ub4sNLN4WsttZn",
+      "category": "alpha",
+      "type": "lp",
+      "source": "auto",
+      "addedAt": "2026-05-17T08:01:03.641Z",
+      "stats": {
+        "win_rate": 1,
+        "total_positions_observed": 2,
+        "avg_pnl_pct": 61.78,
+        "preferred_strategy": "bid_ask",
+        "first_seen_pool": "8qbrfc8qTnNGMFfxYyijn2KCMzJj6un2QcmktMQC762H",
+        "last_seen": "2026-05-17T08:01:03.641Z"
+      }
+    },
+    {
+      "name": "auto_PRIMISSOL_DZAdQA",
+      "address": "DZAdQApmkY2wbhZtojqmqzu96GVKwi1KX7ETV4c4v6YD",
+      "category": "alpha",
+      "type": "lp",
+      "source": "auto",
+      "addedAt": "2026-05-17T08:01:03.642Z",
+      "stats": {
+        "win_rate": 1,
+        "total_positions_observed": 2,
+        "avg_pnl_pct": 20.53,
+        "preferred_strategy": "unknown",
+        "first_seen_pool": "2ohXmzRN3enLMukRCgaqtig5cNhP2ZVpVH67xLY2sQoq",
+        "last_seen": "2026-05-17T08:01:03.642Z"
+      }
+    },
+    {
+      "name": "auto_CATCOINSOL_4xuJ6z",
+      "address": "4xuJ6zYvqooQjtG2HRx3jn5dbmTLnnrU8DeqxdDkEre4",
+      "category": "alpha",
+      "type": "lp",
+      "source": "auto",
+      "addedAt": "2026-05-17T10:01:59.357Z",
+      "stats": {
+        "win_rate": 1,
+        "total_positions_observed": 2,
+        "avg_pnl_pct": 60.74,
+        "preferred_strategy": "bid_ask",
+        "first_seen_pool": "Bnqt67es7GZP2wzM56VJTnR1vVtboSRTikghaTYP34dH",
+        "last_seen": "2026-05-17T10:01:59.357Z"
+      }
+    },
+    {
+      "name": "auto_CATCOINSOL_EWmKhc",
+      "address": "EWmKhckWAb7KAcoxRVuDYRW56hj9ZdvEwJKq53cAg2vK",
+      "category": "alpha",
+      "type": "lp",
+      "source": "auto",
+      "addedAt": "2026-05-17T10:01:59.358Z",
+      "stats": {
+        "win_rate": 1,
+        "total_positions_observed": 5,
+        "avg_pnl_pct": 36.03,
+        "preferred_strategy": "unknown",
+        "first_seen_pool": "Bnqt67es7GZP2wzM56VJTnR1vVtboSRTikghaTYP34dH",
+        "last_seen": "2026-05-17T10:01:59.358Z"
+      }
+    },
+    {
+      "name": "auto_CATCOINSOL_4SxaUU",
+      "address": "4SxaUUZiT8d14xZ3DYyYuz52ivyG2EdnjBHP4oPm7Zou",
+      "category": "alpha",
+      "type": "lp",
+      "source": "auto",
+      "addedAt": "2026-05-17T10:01:59.360Z",
+      "stats": {
+        "win_rate": 1,
+        "total_positions_observed": 4,
+        "avg_pnl_pct": 22.9,
+        "preferred_strategy": "unknown",
+        "first_seen_pool": "Bnqt67es7GZP2wzM56VJTnR1vVtboSRTikghaTYP34dH",
+        "last_seen": "2026-05-17T10:01:59.359Z"
+      }
+    },
+    {
+      "name": "auto_YaeSOL_AU1gii",
+      "address": "AU1giiSeuy7dsEY82wJnbmSKCyz3wqU8rJ5YCFaeeMuv",
+      "category": "alpha",
+      "type": "lp",
+      "source": "auto",
+      "addedAt": "2026-05-17T10:24:45.194Z",
+      "stats": {
+        "win_rate": 1,
+        "total_positions_observed": 2,
+        "avg_pnl_pct": 24.93,
+        "preferred_strategy": "unknown",
+        "first_seen_pool": "8qbrfc8qTnNGMFfxYyijn2KCMzJj6un2QcmktMQC762H",
+        "last_seen": "2026-05-17T10:24:45.194Z"
+      }
+    },
+    {
+      "name": "auto_WORLDCUPSO_2McCWm",
+      "address": "2McCWmJ9xD5RXLJwnKsfb5jQ7E4PyFhPWeDUV9Zn7xjv",
+      "category": "alpha",
+      "type": "lp",
+      "source": "auto",
+      "addedAt": "2026-05-17T14:36:06.604Z",
+      "stats": {
+        "win_rate": 1,
+        "total_positions_observed": 3,
+        "avg_pnl_pct": 103.59,
+        "preferred_strategy": "spot",
+        "first_seen_pool": "8UYCgRrxZc3XKY8PBJDSKubAUP4mpbxoj1EZJ7A5G9wy",
+        "last_seen": "2026-05-17T14:36:06.604Z"
+      }
+    },
+    {
+      "name": "auto_WORLDCUPSO_AngYLP",
+      "address": "AngYLPgsfwFqLNtWPQY5HccX7r8J1aXzQCE9QY9JDFQd",
+      "category": "alpha",
+      "type": "lp",
+      "source": "auto",
+      "addedAt": "2026-05-17T14:36:06.606Z",
+      "stats": {
+        "win_rate": 1,
+        "total_positions_observed": 2,
+        "avg_pnl_pct": 83.56,
+        "preferred_strategy": "spot",
+        "first_seen_pool": "8UYCgRrxZc3XKY8PBJDSKubAUP4mpbxoj1EZJ7A5G9wy",
+        "last_seen": "2026-05-17T14:36:06.605Z"
+      }
+    },
+    {
+      "name": "auto_WORLDCUPSO_DHoq1u",
+      "address": "DHoq1uL46hjz1ocN3KEs6qDje3RooDDHSgdMbVAqwHuw",
+      "category": "alpha",
+      "type": "lp",
+      "source": "auto",
+      "addedAt": "2026-05-17T14:36:06.607Z",
+      "stats": {
+        "win_rate": 1,
+        "total_positions_observed": 2,
+        "avg_pnl_pct": 61,
+        "preferred_strategy": "unknown",
+        "first_seen_pool": "8UYCgRrxZc3XKY8PBJDSKubAUP4mpbxoj1EZJ7A5G9wy",
+        "last_seen": "2026-05-17T14:36:06.607Z"
+      }
+    },
+    {
+      "name": "auto_TRKSOL_2eVoHu",
+      "address": "2eVoHutan1dZMpBTvP83kpcz6xNrMd1hCdmmgGq4feRZ",
+      "category": "alpha",
+      "type": "lp",
+      "source": "auto",
+      "addedAt": "2026-05-17T23:25:17.742Z",
+      "stats": {
+        "win_rate": 1,
+        "total_positions_observed": 3,
+        "avg_pnl_pct": 44.62,
+        "preferred_strategy": "CurveImBalanced",
+        "first_seen_pool": "7sSuYu9J7hHtr3EqLSxHT9mdkuxfnNiuNKrLsh5M6NcU",
+        "last_seen": "2026-05-17T23:25:17.741Z"
+      }
+    },
+    {
+      "name": "auto_uncSOL_8MrKs3",
+      "address": "8MrKs3a2hAyTGSfV91yG8MrPCGve89tZadC8NQTrQjXL",
+      "category": "alpha",
+      "type": "lp",
+      "source": "auto",
+      "addedAt": "2026-05-18T02:36:43.245Z",
+      "stats": {
+        "win_rate": 1,
+        "total_positions_observed": 2,
+        "avg_pnl_pct": 37.76,
+        "preferred_strategy": "bid_ask",
+        "first_seen_pool": "rk51a7BHnsdQcD3heYoyZkJYy23KsPSTFMFL4uMwczR",
+        "last_seen": "2026-05-18T02:36:43.244Z"
+      }
+    },
+    {
+      "name": "auto_uncSOL_9rN8ME",
+      "address": "9rN8MEkC6rbKMf1h5BU16KXdAMqKvwNj8nharskdnXoH",
+      "category": "alpha",
+      "type": "lp",
+      "source": "auto",
+      "addedAt": "2026-05-18T02:36:43.246Z",
+      "stats": {
+        "win_rate": 1,
+        "total_positions_observed": 5,
+        "avg_pnl_pct": 24.59,
+        "preferred_strategy": "spot",
+        "first_seen_pool": "rk51a7BHnsdQcD3heYoyZkJYy23KsPSTFMFL4uMwczR",
+        "last_seen": "2026-05-18T02:36:43.246Z"
+      }
+    },
+    {
+      "name": "auto_AliensSOL_G2WnVm",
+      "address": "G2WnVm7HRMCKftkmLtwbgab8a2ZPRQh1DjntF3o92B5X",
+      "category": "alpha",
+      "type": "lp",
+      "source": "auto",
+      "addedAt": "2026-05-18T02:36:43.247Z",
+      "stats": {
+        "win_rate": 1,
+        "total_positions_observed": 7,
+        "avg_pnl_pct": 30.65,
+        "preferred_strategy": "spot",
+        "first_seen_pool": "Cy4ZW25mnXpwD1XUUio8V6bPjpVBDCXJ58fkcZaAKuoS",
+        "last_seen": "2026-05-18T02:36:43.247Z"
+      }
+    },
+    {
+      "name": "auto_AliensSOL_DL3rEv",
+      "address": "DL3rEvJvTQCt4K7T54M47ADHzm9cmCe8z3V1NXsoyoKe",
+      "category": "alpha",
+      "type": "lp",
+      "source": "auto",
+      "addedAt": "2026-05-18T02:36:43.249Z",
+      "stats": {
+        "win_rate": 1,
+        "total_positions_observed": 3,
+        "avg_pnl_pct": 21.11,
+        "preferred_strategy": "unknown",
+        "first_seen_pool": "Cy4ZW25mnXpwD1XUUio8V6bPjpVBDCXJ58fkcZaAKuoS",
+        "last_seen": "2026-05-18T02:36:43.248Z"
+      }
+    },
+    {
+      "name": "auto_RoyalPopSO_4v79Xy",
+      "address": "4v79XyJsTeiqZiZCpGjQPRHm3zZewtb23RRSy9hebAB9",
+      "category": "alpha",
+      "type": "lp",
+      "source": "auto",
+      "addedAt": "2026-05-18T03:35:55.357Z",
+      "stats": {
+        "win_rate": 1,
+        "total_positions_observed": 2,
+        "avg_pnl_pct": 22.13,
+        "preferred_strategy": "unknown",
+        "first_seen_pool": "8xECmRrJsviYqzFt1S6anofeUsX1CwUTHpY8u3hSstkB",
+        "last_seen": "2026-05-18T03:35:55.357Z"
+      }
+    },
+    {
+      "name": "auto_PRIMISSOL_3sQHjH",
+      "address": "3sQHjHaYX2W2xK3cgdCvUg2VzXKuoXAwugdz9U1h2oS4",
+      "category": "alpha",
+      "type": "lp",
+      "source": "auto",
+      "addedAt": "2026-05-18T07:03:05.033Z",
+      "stats": {
+        "win_rate": 1,
+        "total_positions_observed": 2,
+        "avg_pnl_pct": 22.34,
+        "preferred_strategy": "unknown",
+        "first_seen_pool": "2ohXmzRN3enLMukRCgaqtig5cNhP2ZVpVH67xLY2sQoq",
+        "last_seen": "2026-05-18T07:03:05.032Z"
+      }
+    }
+  ]
+}

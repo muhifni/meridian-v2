@@ -3,17 +3,64 @@ import { getMyPositions, closePosition } from "../../tools/dlmm.js";
 import { config } from "../../config.js";
 import { getWalletBalances } from "../../tools/wallet.js";
 import { setPositionInstruction } from "../../state.js";
+import { getVirtualWalletSummary } from "../../dry-run-simulator.js";
 
 const positions = new Composer();
 
-// /wallet, /status
-positions.command(["wallet", "status"], async (ctx) => {
+// /wallet — Wallet balance & address (with virtual wallet in dry run)
+positions.command("wallet", async (ctx) => {
+  try {
+    const wallet = await getWalletBalances();
+    const sol = wallet?.sol ?? "?";
+    const usd = wallet?.sol_usd ?? "?";
+    const addr = config.wallet ?? "?";
+    const shortAddr = addr.length > 10 ? `${addr.slice(0, 4)}...${addr.slice(-4)}` : addr;
+    let reply = `💰 Wallet: ${sol} SOL (~$${usd})\nAddress: \`${shortAddr}\``;
+
+    if (process.env.DRY_RUN === "true") {
+      const w = getVirtualWalletSummary();
+      reply += `\n🪙 Virtual: ${w.balance.toFixed(3)} SOL / ${w.initial.toFixed(3)} SOL (${w.netPnlPct >= 0 ? "+" : ""}${w.netPnlPct}%)`;
+      if (w.totalDeployed > 0) {
+        reply += `\n   Deployed: ${w.totalDeployed.toFixed(3)} | Returned: ${w.totalReturned.toFixed(3)} | Fees: ${w.totalFees.toFixed(4)} SOL`;
+      }
+    }
+
+    await ctx.reply(reply);
+  } catch (e) {
+    await ctx.reply(`Error: ${e.message}`);
+  }
+});
+
+// /status — Full bot overview
+positions.command("status", async (ctx) => {
   try {
     const [wallet, pos] = await Promise.all([getWalletBalances(), getMyPositions({ force: true })]);
-    const suffix = ctx.message.text.startsWith("/status") && pos.total_positions
-      ? "\n\nUse /positions for the numbered list."
-      : "";
-    await ctx.reply(`${formatWalletStatus(wallet, pos)}${suffix}`);
+    const sol = wallet?.sol ?? "?";
+    const usd = wallet?.sol_usd ?? "?";
+    const posCount = pos?.total_positions ?? 0;
+    const totalVal = pos?.total_value_usd ?? 0;
+    const totalPnl = pos?.total_pnl_usd ?? 0;
+    const cur = config.management.solMode ? "◎" : "$";
+    const pnlStr = totalPnl >= 0 ? `+${cur}${totalPnl}` : `-${cur}${Math.abs(totalPnl)}`;
+    const dryRun = process.env.DRY_RUN === "true" ? "✅ Dry Run" : "⚠️ LIVE";
+    const screening = config.screening?.enabled ? "active" : "paused";
+    const mode = config.management?.solMode ? "SOL mode" : "USD mode";
+    const lines = [
+      `🧙 *Bot Status*`,
+      `${dryRun} | ${mode}`,
+      `Screening: ${screening}`,
+      ``,
+      `💰 ${sol} SOL (~$${usd})`,
+      `📊 ${posCount} positions | Value: ${cur}${totalVal} | PnL: ${pnlStr}`,
+    ];
+    if (posCount && pos?.positions?.length) {
+      const posLines = pos.positions.slice(0, 3).map((p, i) =>
+        `${i + 1}. ${p.pair} | ${cur}${p.total_value_usd} | ${p.pnl_usd >= 0 ? "+" : ""}${cur}${p.pnl_usd}`
+      );
+      lines.push(``, `*Recent positions:*`, ...posLines);
+      if (posCount > 3) lines.push(`...and ${posCount - 3} more`);
+    }
+    await ctx.reply(lines.join("\n"));
   } catch (e) {
     await ctx.reply(`Error: ${e.message}`);
   }
@@ -106,13 +153,5 @@ positions.hears(/^\/set\s+(\d+)\s+(.+)$/i, async (ctx) => {
     await ctx.reply(`✅ Note set for ${p.pair}:\n"${note}"`);
   } catch (e) { await ctx.reply(`Error: ${e.message}`); }
 });
-
-// ─── Helpers ─────────────────────────────────────────────────────
-function formatWalletStatus(wallet, positions) {
-  const sol = wallet?.sol ?? "?";
-  const usd = wallet?.sol_usd ?? "?";
-  const posCount = positions?.total_positions ?? 0;
-  return `💰 Wallet: ${sol} SOL (~$${usd})\n📊 Positions: ${posCount}`;
-}
 
 export default positions;

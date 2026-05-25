@@ -201,7 +201,7 @@ function isSystemRoleError(error) {
 
 function isToolChoiceRequiredError(error) {
   const message = String(error?.message || error?.error?.message || error || "");
-  return /tool_choice/i.test(message) && /required/i.test(message);
+  return /tool_choice/i.test(message) || /tool_choice/i.test(error?.error?.message || "");
 }
 
 /**

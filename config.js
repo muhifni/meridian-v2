@@ -53,6 +53,14 @@ function nonEmptyString(...values) {
 }
 
 export const config = {
+  // ─── Dry Run Simulation ───────────────────
+  dryRun: {
+    initialVirtualBalance: u.initialVirtualBalance ?? 0.65,
+    slippagePct:          u.slippagePct          ?? 2,       // % slippage on simulated auto-swap
+    gasFeePerDeploy:      u.gasFeePerDeploy      ?? 0.0005,  // SOL
+    gasFeePerClose:       u.gasFeePerClose       ?? 0.0002,  // SOL
+  },
+
   // ─── Risk Limits ─────────────────────────
   risk: {
     maxPositions:    u.maxPositions    ?? 3,

@@ -137,6 +137,13 @@ export async function registerVirtualPosition(deployResult, poolCandidate, deplo
   };
 
   state.positions[positionId] = virtualPos;
+
+  // 💰 Virtual wallet: deduct deploy cost + gas to mirror real SOL balance
+  const dryRunCfg = config.dryRun;
+  state.virtualSolBalance = (state.virtualSolBalance ?? dryRunCfg.initialVirtualBalance) - deployAmount - dryRunCfg.gasFeePerDeploy;
+  state.virtualTotalDeployed = (state.virtualTotalDeployed ?? 0) + deployAmount;
+  state.virtualTotalFees = (state.virtualTotalFees ?? 0) + dryRunCfg.gasFeePerDeploy;
+
   saveState(state);
 
   log("simulator", `Virtual position registered: ${positionId} | ${virtualPos.pool_name} | ${deployAmount} SOL | initial_price=${virtualPos.initial_price}`);
@@ -360,6 +367,22 @@ async function _closeVirtualPosition(pos, evaluation) {
     state.positions[pos.position].closed_at = now;
     saveState(state);
   }
+
+  // 💰 Virtual wallet: add back proceeds minus slippage & gas on close
+  const dryRunCfg = config.dryRun;
+  const solPrice = await _getSolPrice();
+  const proceedsBeforeSlippage = pos.amount_sol || 0;
+  const pnlInSol = proceedsBeforeSlippage > 0
+    ? proceedsBeforeSlippage * (evaluation.pnl_pct / 100)
+    : (evaluation.pnl_usd || 0) / (solPrice || 85);
+  const slippageDeduction = proceedsBeforeSlippage * (dryRunCfg.slippagePct / 100);
+  const returnedSol = Math.max(0, proceedsBeforeSlippage + pnlInSol - slippageDeduction - dryRunCfg.gasFeePerClose);
+
+  const wState = loadState();
+  wState.virtualSolBalance = (wState.virtualSolBalance ?? dryRunCfg.initialVirtualBalance) + returnedSol;
+  wState.virtualTotalReturned = (wState.virtualTotalReturned ?? 0) + returnedSol;
+  wState.virtualTotalFees = (wState.virtualTotalFees ?? 0) + slippageDeduction + dryRunCfg.gasFeePerClose;
+  saveState(wState);
 
   // Archive to virtual-positions.json
   const vlog = loadVirtualLog();
@@ -587,7 +610,8 @@ export function getVirtualSummary() {
   const open   = Object.values(state.positions).filter(p => p.virtual && !p.closed);
 
   if (closed.length === 0 && open.length === 0) {
-    return "No virtual positions yet. Deploy in dry run mode to start simulating.";
+    const w0 = getVirtualWalletSummary();
+    return `No virtual positions yet.\n🪙 Virtual Wallet: ${w0.balance.toFixed(3)} SOL / ${w0.initial.toFixed(3)} SOL (${w0.netPnlPct >= 0 ? "+" : ""}${w0.netPnlPct}%)`;
   }
 
   const wins    = closed.filter(p => (p.final_pnl_pct ?? 0) >= 1);
@@ -598,9 +622,15 @@ export function getVirtualSummary() {
     : 0;
   const totalFees = closed.reduce((s, p) => s + (p.fees_earned_usd ?? 0), 0);
 
+  const wSummary = getVirtualWalletSummary();
+  const walletLine = wSummary.initial > 0
+    ? `🪙 Virtual Wallet: ${wSummary.balance.toFixed(3)} SOL / ${wSummary.initial.toFixed(3)} SOL (${wSummary.netPnlPct >= 0 ? "+" : ""}${wSummary.netPnlPct}%)`
+    : `🪙 Virtual Wallet: ${wSummary.balance.toFixed(3)} SOL`;
+
   const lines = [
     `📊 Virtual Trading Summary (Dry Run)`,
     ``,
+    walletLine,
     `Open: ${open.length} | Closed: ${closed.length}`,
   ];
 
@@ -631,4 +661,28 @@ export function getVirtualSummary() {
   }
 
   return lines.join("\n");
+}
+
+/**
+ * Get virtual wallet balance summary.
+ */
+export function getVirtualWalletSummary() {
+  const state = loadState();
+  const dryRunCfg = config.dryRun;
+  const initial = dryRunCfg.initialVirtualBalance;
+  const balance = state.virtualSolBalance ?? initial;
+  const totalDeployed = state.virtualTotalDeployed ?? 0;
+  const totalReturned = state.virtualTotalReturned ?? 0;
+  const totalFees = state.virtualTotalFees ?? 0;
+  const netPnl = balance - initial;
+
+  return {
+    initial: parseFloat(initial.toFixed(3)),
+    balance: parseFloat(balance.toFixed(3)),
+    totalDeployed: parseFloat(totalDeployed.toFixed(3)),
+    totalReturned: parseFloat(totalReturned.toFixed(3)),
+    totalFees: parseFloat(totalFees.toFixed(4)),
+    netPnl: parseFloat(netPnl.toFixed(3)),
+    netPnlPct: initial > 0 ? ((netPnl / initial) * 100).toFixed(1) : "0.0",
+  };
 }

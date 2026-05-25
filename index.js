@@ -31,7 +31,7 @@ import { getActiveStrategy } from "./strategy-library.js";
 import { recordPositionSnapshot, recallForPool, addPoolNote } from "./pool-memory.js";
 import { checkSmartWalletsOnPool, listSmartWallets, initSmartWalletsFile, getWalletConfidence } from "./smart-wallets.js";
 import { evolveSmartWallets } from "./wallet-evolution.js";
-import { registerVirtualPosition, evaluateVirtualPositions, getVirtualSummary } from "./dry-run-simulator.js";
+import { registerVirtualPosition, evaluateVirtualPositions, getVirtualSummary, getVirtualWalletSummary } from "./dry-run-simulator.js";
 import { getCausalAnalysisSummary } from "./causal-analysis.js";
 import { getTokenNarrative, getTokenInfo } from "./tools/token.js";
 import { stageSignals } from "./signal-tracker.js";
@@ -1176,14 +1176,24 @@ function describeLatestCandidates(limit = 5) {
 function formatWalletStatus(wallet, positions) {
   const deployAmount = computeDeployAmount(wallet.sol);
   const hive = isHiveMindEnabled() ? "on" : "off";
-  return [
+  const lines = [
     `Wallet: ${wallet.sol} SOL ($${wallet.sol_usd})`,
     `SOL price: $${wallet.sol_price}`,
     `Open positions: ${positions.total_positions}/${config.risk.maxPositions}`,
     `Next deploy amount: ${deployAmount} SOL`,
     `Dry run: ${process.env.DRY_RUN === "true" ? "yes" : "no"}`,
     `HiveMind: ${hive}`,
-  ].join("\n");
+  ];
+
+  if (process.env.DRY_RUN === "true") {
+    const w = getVirtualWalletSummary();
+    lines.splice(1, 0, `🪙 Virtual Wallet: ${w.balance.toFixed(3)} SOL / ${w.initial.toFixed(3)} SOL (${w.netPnlPct >= 0 ? "+" : ""}${w.netPnlPct}%)`);
+    if (w.totalDeployed > 0) {
+      lines.splice(2, 0, `   Deployed: ${w.totalDeployed.toFixed(3)} SOL | Returned: ${w.totalReturned.toFixed(3)} SOL | Gas+Slipp: ${w.totalFees.toFixed(4)} SOL`);
+    }
+  }
+
+  return lines.join("\n");
 }
 
 function formatConfigSnapshot() {

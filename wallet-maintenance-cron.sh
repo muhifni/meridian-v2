@@ -7,8 +7,9 @@
 # 3. Report summary
 
 set -e
+export PATH="/home/ubuntu/.local/bin:/home/ubuntu/.nvm/versions/node/v24.13.0/bin:$PATH"
 cd /home/ubuntu/project/meridian
-source ~/.bashrc 2>/dev/null
+source ~/.twitter-env 2>/dev/null
 
 exec node --input-type=module -e '
 import { discoverWalletsFromKolTweets } from "./twitter-wallet.js";
