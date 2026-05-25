@@ -106,7 +106,7 @@ export async function registerVirtualPosition(deployResult, poolCandidate, deplo
     pool: poolCandidate?.pool || deployResult.would_deploy?.pool_address,
     pool_name: poolCandidate?.name || deployResult.would_deploy?.pool_address?.slice(0, 8),
     base_mint: poolCandidate?.base?.mint || null,
-    strategy: poolCandidate?.strategy || config.strategy.strategy || "bid_ask",
+    strategy: deployResult.would_deploy?.strategy || poolCandidate?.strategy || config.strategy.strategy || "bid_ask",
     bin_range: {
       min: deployResult.would_deploy?.lower_bin ?? null,
       max: deployResult.would_deploy?.upper_bin ?? null,

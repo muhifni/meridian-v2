@@ -688,6 +688,7 @@ export async function runScreeningCycle({ silent = false } = {}) {
 
     let deployAttempted = false;
     let deploySucceeded = false;
+    let lastDeployResult = null;
     log("cron", `[DEBUG] Calling agentLoop with ${passing.length} candidates, goal length ${candidateBlocks.join("\\n\\n").length} chars`);
     const screeningController = new AbortController();
     const agentResult = await withTimeout(agentLoop(`
@@ -771,6 +772,7 @@ IMPORTANT:
           if (name === "deploy_position") {
             deployAttempted = true;
             deploySucceeded = Boolean(success && result?.success !== false && !result?.error && !result?.blocked);
+            lastDeployResult = result;
           }
           await liveMessage?.toolFinish(name, result, success);
         },
@@ -825,7 +827,7 @@ IMPORTANT:
           deployedPool.pool._sw_at_deploy = swAddresses;
         }
         const virtualId = await registerVirtualPosition(
-          { dry_run: true, would_deploy: { pool_address: deployedPool.pool.pool } },
+          lastDeployResult || { dry_run: true, would_deploy: { pool_address: deployedPool.pool.pool } },
           deployedPool.pool,
           deployAmount
         );
