@@ -183,7 +183,7 @@ export async function recordPerformance(perf) {
     // Darwinian signal weight recalculation
     if (config.darwin?.enabled) {
       const { recalculateWeights } = await import("./signal-weights.js");
-      const wResult = recalculateWeights(data.performance, config);
+      const wResult = recalculateWeights(livePerf, config);
       if (wResult.changes.length > 0) {
         log("evolve", `Darwin: adjusted ${wResult.changes.length} signal weight(s)`);
       }
@@ -191,9 +191,9 @@ export async function recordPerformance(perf) {
 
     // Causal analysis — find WHY positions win or lose
     const { runCausalAnalysis } = await import("./causal-analysis.js");
-    const causalResult = runCausalAnalysis(data.performance);
+    const causalResult = runCausalAnalysis(livePerf);
     if (causalResult.lessons_added > 0) {
-      log("causal", `Added ${causalResult.lessons_added} causal lesson(s) from ${data.performance.length} closes`);
+      log("causal", `Added ${causalResult.lessons_added} causal lesson(s) from ${livePerf.length} closes`);
     }
   }
 
