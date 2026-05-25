@@ -37,7 +37,7 @@ import { getTokenNarrative, getTokenInfo } from "./tools/token.js";
 import { stageSignals } from "./signal-tracker.js";
 import { getWeightsSummary } from "./signal-weights.js";
 import { bootstrapHiveMind, ensureAgentId, getHiveMindPullMode, isHiveMindEnabled, pullHiveMindLessons, pullHiveMindPresets, registerHiveMindAgent, startHiveMindBackgroundSync } from "./hivemind.js";
-import { initLogger, logManagementCycle } from "./position-logger.js";
+import { initLogger, logManagementCycle, logScreeningCycle } from "./position-logger.js";
 import { appendDecision } from "./decision-log.js";
 
 const entrypointPath = process.env.pm_exec_path || process.argv[1];
@@ -829,6 +829,14 @@ IMPORTANT:
     screenReport = `Screening cycle failed: ${error.message}`;
   } finally {
     _screeningBusy = false;
+
+    // Log screening cycle result
+    initLogger();
+    logScreeningCycle({
+      result: screenReport ? screenReport.includes("DEPLOYED") ? "deployed" : screenReport.includes("NO DEPLOY") ? "no_deploy" : screenReport.includes("skipped") ? "skipped" : "other" : "error",
+      summary: screenReport?.split("\n")?.[0] || "no report",
+      isDryRun: process.env.DRY_RUN === "true",
+    });
 
     // P1: Evaluate previously skipped pools (fire-and-forget, non-blocking)
     import("./skipped-tracker.js")
